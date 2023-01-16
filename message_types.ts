@@ -15,41 +15,41 @@ export function error(name: string) {
 
     switch (name) {
     case "INVALID_FORMAT":
-      error.message = "The format of the received message is invalid.";
-      break;
+        error.message = "The format of the received message is invalid.";
+        break;
     case "UNKNOWN_OBJECT":
-      error.message = "The object requested is unknown to that specific node.";
-      break;
+        error.message = "The object requested is unknown to that specific node.";
+        break;
     case "UNFINDABLE_OBJECT":
-      error.message = "The object requested could not be found in the node's network.";
-      break;
+        error.message = "The object requested could not be found in the node's network.";
+        break;
     case "INVALID_HANDSHAKE":
-      error.message = "The peer sent other validly formatted messages before sending a valid hello message.";
-      break;
+        error.message = "The peer sent other validly formatted messages before sending a valid hello message.";
+        break;
     case "INVALID_TX_OUTPOINT":
-      error.message = "The transaction outpoint is invalid.";
-      break;
+        error.message = "The transaction outpoint is invalid.";
+        break;
     case "INVALID_TX_SIGNATURE":
-      error.message = "The transaction signature is invalid.";
-      break;
+        error.message = "The transaction signature is invalid.";
+        break;
     case "INVALID_TX_CONSERVATION":
-      error.message = "The transaction does not satisfy the weak law of conservation.";
-      break;
+        error.message = "The transaction does not satisfy the weak law of conservation.";
+        break;
     case "INVALID_BLOCK_COINBASE":
-      error.message = "The block coinbase transaction is invalid.";
-      break;
+        error.message = "The block coinbase transaction is invalid.";
+        break;
     case "INVALID_BLOCK_TIMESTAMP":
-      error.message = "The block timestamp is invalid.";
-      break;
+        error.message = "The block timestamp is invalid.";
+        break;
     case "INVALID_BLOCK_POW":
-      error.message = "The block proof-of-work is invalid.";
-      break;
+        error.message = "The block proof-of-work is invalid.";
+        break;
     case "INVALID_GENESIS":
-      error.message = "The block has a previd of null but it isn't genesis.";
-      break;
+        error.message = "The block has a previd of null but it isn't genesis.";
+        break;
     default:
-      error.name = "INTERNAL_ERROR";
-      error.message = "Something unexpected happened.";
+        error.name = "INTERNAL_ERROR";
+        error.message = "Something unexpected happened.";
   }
   return error;
 }
