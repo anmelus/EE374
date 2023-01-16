@@ -1,10 +1,10 @@
 import net from 'net';
-import { canonicalize } from 'json-canonicalize';
+//import { canonicalize } from 'json-canonicalize';
 
 const PORT = 18018;
 const HOST = '0.0.0.0';
 
-const msgTypes = ["transaction", "block", "hello", "error", "peers", "getobject", "ihaveobject", "object", "getmempool", "mempool", "getchaintip", "chaintip"];
+const msgTypes = ["transaction", "block", "hello", "error", "getpeers", "peers", "getobject", "ihaveobject", "object", "getmempool", "mempool", "getchaintip", "chaintip"];
 let msgCount = new Map<string, number>();
 
 // takes a listener which itself takes a socket as argument and void return
@@ -38,51 +38,44 @@ const server = net.createServer((socket) => {
             }
             if (isJSON) {
                 if (!msgTypes.includes(dataJson.type)) {
-                    socket.write(JSON.stringify(
-                        {"type": "error",
+                    socket.write(JSON.stringify({
+                        "type": "error",
                         "name": "INVALID_FORMAT",
-                        "message": "Not a valid message type"})
-                        );  
-                }
-                let msgType = dataJson.type; 
-                if (msgCount.get(address) === 0) {  // handle first message must be hello
-                    msgCount.set(address, 1);
-                    if (msgType === "hello") {
-                        socket.write(JSON.stringify(
-                            {"type": "hello",
-                            "version": '0.9.0',
-                            "agent": "Marabu-Core Client 0.9"})
-                        );
+                        "message": "Not a valid message type"
+                    }));
+                } else {
+                    let msgType = dataJson.type;
+                    console.log(msgType)
+                    if (msgCount.get(address) === 0) {
+                        if (msgType === "hello") {
+                            msgCount.set(address, 1);
+                            socket.write(JSON.stringify({
+                                "type": "hello",
+                                "version": '0.9.0',
+                                "agent": "Marabu-Core Client 0.9"
+                            }));
+                        } else {
+                            socket.write(JSON.stringify({
+                                "type": "error",
+                                "version": 'INVALID_HANDSHAKE',
+                                "message": 'First message was not hello'
+                            }));
+                            socket.end();
+                        }
+                    } else if (msgType === "getpeers") {
+                        socket.write(JSON.stringify({
+                            "type": "peers",
+                            "peers": [
+                                "dionyziz.com:18018",
+                                "138.197.191.170:18018",
+                                "[fe80::f03c:91ff:fe2c:5a79]:18018"
+                            ]
+                        }));
                     }
-                    else {
-                        socket.write(JSON.stringify(
-                            {"type": "error",
-                            "version": 'INVALID_HANDSHAKE',
-                            "message": 'First message was not hello'
-                            })
-                        );
-                        socket.end();
-                        // close(socket)
-                    }
-                }
-                if (msgType === "getpeers") {
-                    socket.write(JSON.stringify(
-                        {"type": "peers",
-                        "peers": [
-                            "dionyziz.com:18018" /* dns */,
-                            "138.197.191.170:18018" /* ipv4 */,
-                            "[fe80::f03c:91ff:fe2c:5a79]:18018" /* ipv6 */
-                        ]})
-                        );
                 }
             }
+            buffer = messages[messages.length - 1];
         }
-        
-        buffer = messages[messages.length - 1];  // put last message fragment back in buffer
-        
-        // console.log(`Client ${address} sent: ${data}`);
-        // await delay(3000);
-        // socket.write('Hello, client! Love, Server.'); // write data back to socket/client
     });
     // error checking. Only need to check for data, error, and closed connection.
     socket.on('error', (error) => {
