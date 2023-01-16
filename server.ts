@@ -65,7 +65,7 @@ const server = net.createServer((socket) => {
                         // close(socket)
                     }
                 }
-                if (msgType = "getpeers") {
+                if (msgType === "getpeers") {
                     socket.write(JSON.stringify(
                         {"type": "peers",
                         "peers": [
