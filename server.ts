@@ -1,6 +1,8 @@
 import net from 'net';
 //import { canonicalize } from 'json-canonicalize';
 
+import { hello, error, get_peers, peers, get_object, i_have_object, object, get_mem_pool, mempool, get_chain_tip, chaintip } from "./message_types"
+
 const PORT = 18018;
 const HOST = '0.0.0.0';
 
@@ -22,44 +24,27 @@ const server = net.createServer((socket) => {
         console.log(messages.length);
         console.log(messages);
         if (messages.length > 1) {  // blank character after \n is split off as its own list
-            // for (const message of messages.slice(0, -1)) {  // for all messages but last
-            //     console.log(message); 
-            // } 
             console.log(buffer);
             let isJSON = true;
             try {
                 dataJson = JSON.parse(buffer);
             } catch(e) {
-                socket.write(JSON.stringify(
-                    {"type": "error",
-                    "name": "INVALID_FORMAT",
-                    "message": "Not a JSON object"}));
+                socket.write(JSON.stringify(error("INVALID_FORMAT")))
                 isJSON = false;
             }
             if (isJSON) {
                 if (!msgTypes.includes(dataJson.type)) {
-                    socket.write(JSON.stringify({
-                        "type": "error",
-                        "name": "INVALID_FORMAT",
-                        "message": "Not a valid message type"
-                    }));
+                    socket.write(JSON.stringify(error("INVALID_FORMAT")))
                 } else {
                     let msgType = dataJson.type;
                     console.log(msgType)
                     if (msgCount.get(address) === 0) {
-                        if (msgType === "hello") {
+                        if (msgType === "hello") {                     
+                            // TODO : Verify version is 0.9.x always
                             msgCount.set(address, 1);
-                            socket.write(JSON.stringify({
-                                "type": "hello",
-                                "version": '0.9.0',
-                                "agent": "Marabu-Core Client 0.9"
-                            }));
+                            socket.write(JSON.stringify(hello()))
                         } else {
-                            socket.write(JSON.stringify({
-                                "type": "error",
-                                "version": 'INVALID_HANDSHAKE',
-                                "message": 'First message was not hello'
-                            }));
+                            socket.write(JSON.stringify(error("INVALID_HANDSHAKE")))
                             socket.end();
                         }
                     } else if (msgType === "getpeers") {

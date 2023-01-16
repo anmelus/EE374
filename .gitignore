@@ -1,2 +1,8 @@
+package.json
+package-lock.json
+
+# Everything in node_modules
+node_modules/
+
 # ignore yarn.lock
 yarn.lock
