@@ -20,45 +20,60 @@ const server = net.createServer((socket) => {
         buffer += dataString;
         const messages = buffer.split('\n');
         console.log(messages.length);
+        console.log(messages);
         if (messages.length > 1) {  // blank character after \n is split off as its own list
             // for (const message of messages.slice(0, -1)) {  // for all messages but last
             //     console.log(message); 
             // } 
             console.log(buffer);
+            let isJSON = true;
             try {
                 dataJson = JSON.parse(buffer);
             } catch(e) {
                 socket.write(JSON.stringify(
                     {"type": "error",
                     "name": "INVALID_FORMAT",
-                    "message": "Not a JSON object"})
-                    ); 
+                    "message": "Not a JSON object"}));
+                isJSON = false;
             }
-            if (!msgTypes.includes(dataJson.type)) {
-                socket.write(JSON.stringify(
-                    {"type": "error",
-                    "name": "INVALID_FORMAT",
-                    "message": "Not a valid message type"})
-                    );  
-            }
-            if (msgCount.get(address) === 0) {
-                msgCount.set(address, 1);
-                if (dataJson.type === "hello") {
-                    socket.write(JSON.stringify(
-                        {"type": "hello",
-                        "version": '0.9.0',
-                        "agent": "Marabu-Core Client 0.9"})
-                    );
-                }
-                else {
+            if (isJSON) {
+                if (!msgTypes.includes(dataJson.type)) {
                     socket.write(JSON.stringify(
                         {"type": "error",
-                        "version": 'INVALID_HANDSHAKE',
-                        "message": 'First message was not hello'
-                        })
-                    );
-                    socket.end();
-                    // close(socket)
+                        "name": "INVALID_FORMAT",
+                        "message": "Not a valid message type"})
+                        );  
+                }
+                let msgType = dataJson.type; 
+                if (msgCount.get(address) === 0) {  // handle first message must be hello
+                    msgCount.set(address, 1);
+                    if (msgType === "hello") {
+                        socket.write(JSON.stringify(
+                            {"type": "hello",
+                            "version": '0.9.0',
+                            "agent": "Marabu-Core Client 0.9"})
+                        );
+                    }
+                    else {
+                        socket.write(JSON.stringify(
+                            {"type": "error",
+                            "version": 'INVALID_HANDSHAKE',
+                            "message": 'First message was not hello'
+                            })
+                        );
+                        socket.end();
+                        // close(socket)
+                    }
+                }
+                if (msgType = "getpeers") {
+                    socket.write(JSON.stringify(
+                        {"type": "peers",
+                        "peers": [
+                            "dionyziz.com:18018" /* dns */,
+                            "138.197.191.170:18018" /* ipv4 */,
+                            "[fe80::f03c:91ff:fe2c:5a79]:18018" /* ipv6 */
+                        ]})
+                        );
                 }
             }
         }
