@@ -24,14 +24,10 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     await delay(1000);
     client.write(`tpeers"}` + "\n");
     await delay(1000);
-    /*client.write(JSON.stringify({
+    client.write(JSON.stringify({
                             "type": "peers",
-                            "peers": [
-                                "dionyziz.com:18018",
-                                "138.197.191.170:18018",
-                                "[fe80::f03c:91ff:fe2c:5a79]:18018"
-                            ]
-                        }) + "\n");*/
+                            "peers": BOOTSTRAPS
+                        }) + "\n");
     // TODO: It still acts strangely if you send multiple messages at the same time without delay, try removing the delay and see how it fails
 
     // client.write("Wbgygvf7rgtyv7tfbgy{{{" + "\n");
