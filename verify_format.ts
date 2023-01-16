@@ -17,9 +17,7 @@ export function verify(dataJson: any) {
             if(keys.indexOf("version") === -1 || typeof dataJson['version'] !== 'string') return false;
             if(keys.indexOf("agent") === -1 || typeof dataJson['agent'] !== 'string') return false;
 
-            if (!checkVersion(dataJson.version)) {
-                return false;
-            }
+            if (!checkVersion(dataJson.version)) return false;
 
         break;
         case "error":
@@ -55,9 +53,7 @@ export function verify(dataJson: any) {
 
                 }
                 // Not a valid IP
-                else {
-                    return false;
-                }
+                else return false;
             }
 
         break;
