@@ -1,5 +1,5 @@
 import net from 'net';
-//import { canonicalize } from 'json-canonicalize';
+//import { canonicalize } from 'json-canonicalize'; // TODO
 
 import { hello, error, get_peers, peers, get_object, i_have_object, object, get_mem_pool, mempool, get_chain_tip, chaintip } from "./message_types"
 
@@ -41,6 +41,7 @@ const server = net.createServer((socket) => {
                     if (msgCount.get(address) === 0) {
                         if (msgType === "hello") {                     
                             // TODO : Verify version is 0.9.x always
+                            // Take version as string and split by '.' then compare the first 2 numbers
                             msgCount.set(address, 1);
                             socket.write(JSON.stringify(hello()))
                         } else {
