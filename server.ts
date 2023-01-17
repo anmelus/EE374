@@ -80,13 +80,16 @@ const server = net.createServer((socket) => {
                     let msgType = dataJson.type;
                     console.log(msgType)
                     
-                    /*try { 
-                        verify(dataJson)
-                        } catch(e) {
+                    try { 
+                        if(!verify(dataJson)) {
                             console.log("Data formatted incorrectly.");
                             socket.write(JSON.stringify(error("INVALID_FORMAT")));
                         }
-                    }*/
+                    } 
+                    catch(e) {
+                        console.log("Data formatted incorrectly.");
+                        socket.write(JSON.stringify(error("INVALID_FORMAT")));
+                    }
 
                     if (msgCount.get(address) === 0) {
                         if (msgType === "hello") {                     

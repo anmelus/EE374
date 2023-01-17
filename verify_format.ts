@@ -1,17 +1,18 @@
 import { isIP, isIPv6 } from 'net';
 
-export function verify(dataJson: any) {
+export function verify(dataJson: any): boolean {
     /*
     Verifies that the data received is formatted correctly. This would include type-checking of all parts of the dict and 
     making sure the rest of the fields are correct.
     */
+
+    let keys = Object.keys(dataJson);
     
     switch (dataJson.type) {
         // Check that all keys and values are strings
         case "hello":
           // code for the "hello" case
           // check version is 0.9.x, the only parts are type, version, agent
-            let keys = Object.keys(dataJson);
             if (keys.length !== 3) return false;
             if(keys.indexOf("type") === -1 || dataJson['type'] !== "hello") return false;
             if(keys.indexOf("version") === -1 || typeof dataJson['version'] !== 'string') return false;
@@ -22,7 +23,27 @@ export function verify(dataJson: any) {
         break;
         case "error":
           // code for the "error" case
-          // Probably don't need anything here?
+            if (keys.length !== 3) return false;
+            if(keys.indexOf("type") === -1 || dataJson['type'] !== "error") return false;
+            if(keys.indexOf("name") === -1 || typeof dataJson['name'] !== 'string') return false;
+            if(keys.indexOf("message") === -1 || typeof dataJson['message'] !== 'string') return false; 
+
+            const ERROR_MESSAGES = [
+              'INTERNAL_ERROR',
+              'INVALID_FORMAT',
+              'UNKNOWN_OBJECT',
+              'UNFINDABLE_OBJECT',
+              'INVALID_HANDSHAKE',
+              'INVALID_TX_OUTPOINT',
+              'INVALID_TX_SIGNATURE',
+              'INVALID_TX_CONSERVATION',
+              'INVALID_BLOCK_COINBASE',
+              'INVALID_BLOCK_TIMESTAMP',
+              'INVALID_BLOCK_POW',
+              'INVALID_GENESIS'
+            ];
+          
+            if (ERROR_MESSAGES.indexOf(dataJson['name']) === -1) return false;
         break;
         case "getpeers":
           // code for the "getpeers" case
