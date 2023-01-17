@@ -1,10 +1,12 @@
 import net from 'net';
+import { appendFileSync, writeFileSync, readFileSync } from 'fs';
 
 //import { canonicalize } from 'json-canonicalize'; // TODO
 
 import { hello, error, get_peers, peers, get_object, i_have_object, object, get_mem_pool, mempool, get_chain_tip, chaintip } from "./message_types"
 import { verify } from "./verify_format"
 
+const BOOTSTRAPS = ['45.63.84.226', '45.63.89.228', '144.202.122.8'];
 
 const HOST_PORT = 18018;
 const HOST = '0.0.0.0';
@@ -14,6 +16,19 @@ let msgCount = new Map<string, number>();
 
 let nodes: Array<string> = new Array(); // didn't work with set, don't know why
 
+// Read in the local file, if that fails then the nodes will only contain Bootstraps. It will only fail it peers.txt is empty/does not exist.
+try {
+    let file_content = readFileSync('peers.txt', 'utf8'); // Comes in as single string
+    nodes = file_content.split(/\r?\n/); // Refresh file in case of restart
+    for (let item of BOOTSTRAPS) {
+        if (!nodes.includes(item)) {
+            nodes.push(item);
+        }
+    }
+} catch(e) {
+    nodes = BOOTSTRAPS;
+}
+
 // takes a listener which itself takes a socket as argument and void return
 const server = net.createServer((socket) => {
     const address = `${socket.remoteAddress}:`;
@@ -21,8 +36,14 @@ const server = net.createServer((socket) => {
     console.log(`Client connected: ${address}:${port}`);
     msgCount.set(address, 0);
 
+    writeFileSync('peers.txt', nodes.join('\n')); // Refresh file just in case
+
+    /* It's important to note that the writeFileSync() method will overwrite the entire file, 
+    so if you want to append new data to the file instead of overwriting it (to save time), we should use the appendFileSync() method instead. */
+
     if (!nodes.includes(`${address}:${port}`)) {
         nodes.push(`${address}:${port}`);
+        appendFileSync('peers.txt', '\n' + `${address}:${port}`); // Add peer to local file
     }
 
     console.log(nodes);
@@ -78,8 +99,10 @@ const server = net.createServer((socket) => {
                         for (let item of dataJson.peers) {
                             if (!nodes.includes(item)) {
                                 nodes.push(item);
+                                appendFileSync('peers.txt', '\n' + item); // Add nodes to local file
                             }
                         }
+                        
                         console.log(nodes);
                     }
                 }
