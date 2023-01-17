@@ -1,6 +1,8 @@
 import net from 'net';
 import delay from 'delay';  // for demonstration
+import { canonicalize } from 'json-canonicalize';
 
+// '140.82.49.235'
 const SERVER_HOST = '0.0.0.0';   // replace with IP of boostrapping nodes
 const SERVER_PORT = 18018;
 
@@ -17,12 +19,12 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
          "agent": "Marabu-Core Client 0.9"
     }
     // console.log(JSON.stringify(obj) + '\n');
-    client.write(JSON.stringify(obj) + '\n');
+    client.write(canonicalize(obj) + '\n');
     // client.write(`{"type":"hel`);
-    await delay(1000);
+    //await delay(1000);
     client.write(`{"type": "getpeers"}` + '\n');
     // await delay(100);
-    client.write(JSON.stringify({
+    client.write(canonicalize({
                             "type": "peers",
                             "peers": BOOTSTRAPS
                         }) + "\n");
