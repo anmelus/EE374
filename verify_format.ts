@@ -31,7 +31,6 @@ export function verify(dataJson: any) {
         case "peers":
           // code for the "peers" case
           // Check for IP and Port being given
-          // I think we may also need to keep an adjacency list so we know routes to nodes if nodes disconnect
 
           // npm install is-valid-domain
 
