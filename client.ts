@@ -4,7 +4,7 @@ import delay from 'delay';  // for demonstration
 const SERVER_HOST = '0.0.0.0';   // replace with IP of boostrapping nodes
 const SERVER_PORT = 18018;
 
-const BOOTSTRAPS = ['45.63.84.226:18018', '45.63.89.228:18018', 'dionyziz.com:18018', '2001:db8::1:8080'];
+const BOOTSTRAPS = ['45.63.89.228:6xxxxxx'];
 
 const client = new net.Socket();
 client.connect(SERVER_PORT, SERVER_HOST, async () => {

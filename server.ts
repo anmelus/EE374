@@ -4,7 +4,7 @@ import { appendFileSync, writeFileSync, readFileSync } from 'fs';
 //import { canonicalize } from 'json-canonicalize'; // TODO
 
 import { hello, error, get_peers, peers, get_object, i_have_object, object, get_mem_pool, mempool, get_chain_tip, chaintip } from "./message_types"
-import { verify } from "./verify_format"
+import { verify, check_valid_IP } from "./verify_format"
 
 const BOOTSTRAPS = ['45.63.84.226:18018', '45.63.89.228:18018', '144.202.122.8:18018'];
 
@@ -103,7 +103,8 @@ const server = net.createServer((socket) => {
                         socket.write(JSON.stringify(peers(nodes)));
                     } else if (msgType === "peers") {
                         for (let item of dataJson.peers) {
-                            if (!nodes.includes(item)) {
+                            console.log(item);
+                            if (!nodes.includes(item) && check_valid_IP(item)) {
                                 nodes.push(item);
                                 appendFileSync('peers.txt', '\n' + item); // Add nodes to local file
                             }

@@ -93,11 +93,10 @@ function checkVersion(num: string): boolean {
     return /^0\.9\.[0-9]+$/.test(num);
 }
 
-function check_valid_IP(IP: string): boolean {
+export function check_valid_IP(IP: string): boolean {
   const isValidDomain = require('is-valid-domain');
 
   let parts = IP.split(':');
-  console.log(parts.slice(0, parts.length-1));
 
   if (isIPv6(parts.slice(0, parts.length-1).join(':'))) {            // is ipv6
     const parsedPort = parseInt(parts[parts.length-1], 16);
@@ -105,7 +104,13 @@ function check_valid_IP(IP: string): boolean {
   }
 
   else if (isIP(parts[0])) { // works for ipv4
+    // Checks to make sure there are no characters in the port. Note this means ipv4 will only take decimal numbers.
+    const PORT_REGEX = /^\d+$/;
+    if (!PORT_REGEX.test(parts[parts.length-1])) return false;
+
+    // Checking port number
     const parsedPort = parseInt(parts[parts.length-1]); 
+    console.log(parsedPort);
     return !isNaN(parsedPort) && parsedPort >= 0 && parsedPort <= 65535;
   }
 
