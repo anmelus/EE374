@@ -46,16 +46,24 @@ const server = net.createServer((socket) => {
         appendFileSync('peers.txt', '\n' + `${address}:${port}`); // Add peer to local file
     }
 
-    console.log(nodes);
-    
+    //console.log(nodes);
+
     let buffer = '';
     socket.on('data', async (data) => {  // listen for data written by client
+        //set timer here where server receives message
+        let timeoutId = setTimeout(() => {
+        socket.write(JSON.stringify(error("INVALID_FORMAT")));
+        socket.end();
+    }, 10000);
         let dataString = data.toString();
         let dataJson;
         buffer += dataString;
+        if (buffer.length > 100000) {
+            buffer = "";
+        }
         const messages = buffer.split('\n');
-        console.log(messages.length);
-        console.log(messages);
+        //console.log(messages.length);
+        //console.log(messages);
 
         socket.write(JSON.stringify(hello()));
         socket.write(JSON.stringify(get_peers()));
@@ -63,6 +71,8 @@ const server = net.createServer((socket) => {
         // TODO: Check if message is typed correctly, make a message_verification function
 
         if (messages.length > 1) {  // blank character after \n is split off as its own list
+            //clear timer when gets final line of message
+            clearTimeout(timeoutId)
             console.log(buffer);
             let isJSON = true;
             try {
@@ -78,7 +88,7 @@ const server = net.createServer((socket) => {
                     socket.write(JSON.stringify(error("INVALID_FORMAT")));
                 } else {
                     let msgType = dataJson.type;
-                    console.log(msgType)
+                    //console.log(msgType)
                     
                     try { 
                         if(!verify(dataJson)) {
@@ -116,6 +126,7 @@ const server = net.createServer((socket) => {
             buffer = messages[messages.length - 1];
         }
     });
+
     // error checking. Only need to check for data, error, and closed connection.
     socket.on('error', (error) => {
         console.error(`Client ${address} error: ${error}`);
