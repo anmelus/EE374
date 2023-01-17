@@ -52,6 +52,9 @@ export function verify(dataJson: any): boolean {
         break;
         case "peers":
           // code for the "peers" case
+          if (!dataJson.hasOwnProperty("peers")) {
+            return false;
+          }
           // Check for IP and Port being given
 
             for (let item of dataJson.peers) {
@@ -62,24 +65,39 @@ export function verify(dataJson: any): boolean {
 
         // Not needed currently
         case "getobject":
+          if (!dataJson.hasOwnProperty("objectid")) {
+            return false;
+          }
           // code for the "getobject" case
           break;
         case "ihaveobject":
+          if (!dataJson.hasOwnProperty("objectid")) {
+            return false;
+          }
           // code for the "ihaveobject" case
           break;
         case "object":
+          if (!dataJson.hasOwnProperty("object")) {
+            return false;
+          }
           // code for the "object" case
           break;
         case "getmempool":
           // code for the "getmempool" case
           break;
         case "mempool":
+          if (!dataJson.hasOwnProperty("txids")) {
+            return false;
+          }
           // code for the "mempool" case
           break;
         case "getchaintip":
           // code for the "getchaintip" case
           break;
         case "chaintip":
+          if (!dataJson.hasOwnProperty("blockid")) {
+            return false;
+          }
           // code for the "chaintip" case
           break;
         default:

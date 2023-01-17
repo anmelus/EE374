@@ -1,7 +1,8 @@
 import net from 'net';
+import delay from 'delay';
 import { appendFileSync, writeFileSync, readFileSync } from 'fs';
 
-//import { canonicalize } from 'json-canonicalize'; // TODO
+import { canonicalize } from 'json-canonicalize';
 
 import { hello, error, get_peers, peers, get_object, i_have_object, object, get_mem_pool, mempool, get_chain_tip, chaintip } from "./message_types"
 import { verify, check_valid_IP } from "./verify_format"
@@ -52,7 +53,7 @@ const server = net.createServer((socket) => {
     socket.on('data', async (data) => {  // listen for data written by client
         //set timer here where server receives message
         let timeoutId = setTimeout(() => {
-        socket.write(JSON.stringify(error("INVALID_FORMAT")));
+        socket.write(JSON.stringify(canonicalize(error("INVALID_FORMAT"))));
         socket.end();
     }, 10000);
         let dataString = data.toString();
@@ -65,8 +66,8 @@ const server = net.createServer((socket) => {
         //console.log(messages.length);
         //console.log(messages);
 
-        socket.write(JSON.stringify(hello()));
-        socket.write(JSON.stringify(get_peers()));
+        socket.write(JSON.stringify(canonicalize(hello())));
+        socket.write(JSON.stringify(canonicalize(get_peers())));
 
         // TODO: Check if message is typed correctly, make a message_verification function
 
@@ -79,37 +80,37 @@ const server = net.createServer((socket) => {
                 dataJson = JSON.parse(buffer);
             } catch(e) {
                 console.log("Not a JSON");
-                socket.write(JSON.stringify(error("INVALID_FORMAT")));
+                socket.write(JSON.stringify(canonicalize(error("INVALID_FORMAT"))));
                 isJSON = false;
             }
             if (isJSON) {
                 if (!msgTypes.includes(dataJson.type)) {
                     console.log("Type Error");
-                    socket.write(JSON.stringify(error("INVALID_FORMAT")));
+                    socket.write(JSON.stringify(canonicalize(error("INVALID_FORMAT"))));
                 } else {
                     let msgType = dataJson.type;
 
                     try { 
                         if(!verify(dataJson)) {
                             console.log("Data formatted incorrectly.");
-                            socket.write(JSON.stringify(error("INVALID_FORMAT")));
+                            socket.write(JSON.stringify(canonicalize(error("INVALID_FORMAT"))));
                         }
                     } 
                     catch(e) {
                         console.log("Data formatted incorrectly.");
-                        socket.write(JSON.stringify(error("INVALID_FORMAT")));
+                        socket.write(JSON.stringify(canonicalize(error("INVALID_FORMAT"))));
                     }
 
                     if (msgCount.get(address) === 0) {
                         if (msgType === "hello") {                     
                             msgCount.set(address, 1);
-                            socket.write(JSON.stringify(hello()));
+                            socket.write(JSON.stringify(canonicalize(hello())));
                         } else {
-                            socket.write(JSON.stringify(error("INVALID_HANDSHAKE")));
+                            socket.write(JSON.stringify(canonicalize(error("INVALID_HANDSHAKE"))));
                             socket.end();
                         }
                     } else if (msgType === "getpeers") {
-                        socket.write(JSON.stringify(peers(nodes)));
+                        socket.write(JSON.stringify(canonicalize(peers(nodes))));
                     } else if (msgType === "peers") {
                         for (let item of dataJson.peers) {
                             console.log(item);
@@ -138,4 +139,31 @@ const server = net.createServer((socket) => {
 
 server.listen(HOST_PORT, HOST, () => {
     console.log(`Server listening on ${HOST}:${HOST_PORT}`);
+});
+
+// connect to one peer
+const client = new net.Socket();
+let nodeAddress;
+let nodePort;
+if (nodes[0].includes('::')) {
+    nodeAddress = nodes[0].split('::')[0];
+    nodePort = nodes[0].split('::')[1];
+} else {
+    nodeAddress = nodes[0].split(':')[0];
+    nodePort = nodes[0].split(':')[1];
+}
+console.log(Number(nodePort), nodeAddress);
+client.connect(Number(nodePort), nodeAddress, async () => {
+    const obj = {
+        "type": "hello",
+        "version": "0.9.0",
+        "agent": "Marabu-Core Client 0.9"
+    }
+    client.write(JSON.stringify(obj) + '\n');
+    await delay(5);
+    client.write(`{"type": "getpeers"}` + '\n');
+})
+
+client.on('data', (data) => {  // receive data from server
+    console.log(`Server sent: ${data}`);
 });
