@@ -57,6 +57,9 @@ const server = net.createServer((socket) => {
         console.log(messages.length);
         console.log(messages);
 
+        socket.write(JSON.stringify(hello()));
+        socket.write(JSON.stringify(get_peers()));
+
         // TODO: Check if message is typed correctly, make a message_verification function
 
         if (messages.length > 1) {  // blank character after \n is split off as its own list
