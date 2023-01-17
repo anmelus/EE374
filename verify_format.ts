@@ -52,9 +52,6 @@ export function verify(dataJson: any): boolean {
         break;
         case "peers":
           // code for the "peers" case
-          if (!dataJson.hasOwn("peers")) {
-            return false;
-          }
           // Check for IP and Port being given
 
             for (let item of dataJson.peers) {

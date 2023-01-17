@@ -88,8 +88,7 @@ const server = net.createServer((socket) => {
                     socket.write(JSON.stringify(error("INVALID_FORMAT")));
                 } else {
                     let msgType = dataJson.type;
-                    //console.log(msgType)
-                    
+
                     try { 
                         if(!verify(dataJson)) {
                             console.log("Data formatted incorrectly.");

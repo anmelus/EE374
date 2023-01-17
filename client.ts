@@ -4,7 +4,7 @@ import delay from 'delay';  // for demonstration
 const SERVER_HOST = '0.0.0.0';   // replace with IP of boostrapping nodes
 const SERVER_PORT = 18018;
 
-const BOOTSTRAPS = ['45.63.89.228:6xxxxxx'];
+const BOOTSTRAPS = ['45.63.89.228:20000', '45.63.89.228:asfsdafasd'];
 
 const client = new net.Socket();
 client.connect(SERVER_PORT, SERVER_HOST, async () => {
@@ -13,17 +13,15 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     // messages delimited with \n
     const obj = {
          "type": "hello",
-         "version": "9.0",
+         "version": "0.9.0",
          "agent": "Marabu-Core Client 0.9"
     }
     // console.log(JSON.stringify(obj) + '\n');
-    client.write(JSON.stringify(obj) + "\n");
+    client.write(JSON.stringify(obj) + '\n');
     // client.write(`{"type":"hel`);
     await delay(1000);
-    client.write(`{"type": "ge`);
-    await delay(20000);
-    client.write(`tpeers"}` + "\n");
-    await delay(1000);
+    client.write(`{"type": "getpeers"}` + '\n');
+    // await delay(100);
     client.write(JSON.stringify({
                             "type": "peers",
                             "peers": BOOTSTRAPS
