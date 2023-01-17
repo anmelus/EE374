@@ -13,7 +13,7 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     // messages delimited with \n
     const obj = {
          "type": "hello",
-         "version": "0.9.0",
+         "version": "9.0",
          "agent": "Marabu-Core Client 0.9"
     }
     // console.log(JSON.stringify(obj) + '\n');
@@ -21,7 +21,7 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     // client.write(`{"type":"hel`);
     await delay(1000);
     client.write(`{"type": "ge`);
-    await delay(1000);
+    await delay(20000);
     client.write(`tpeers"}` + "\n");
     await delay(1000);
     client.write(JSON.stringify({
