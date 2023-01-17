@@ -53,30 +53,9 @@ export function verify(dataJson: any): boolean {
           // code for the "peers" case
           // Check for IP and Port being given
 
-          // npm install is-valid-domain
-
-            const isValidDomain = require('is-valid-domain');
-
-            // Note: may want to send into a different function the list of peers and only take the valid peers instead of throwing them all out
             for (let item of dataJson.peers) {
-                if (isIP(item)) {
-                    if (isIPv6(item)) {
-                        // Split and look at text after last colon, check port
-
-                    }
-                    else { // IPv4
-                        // check port
-                    }
-                }
-                else if (isValidDomain(item, {subdomain: true})) {
-                    // check port
-
-
-                }
-                // Not a valid IP
-                else return false;
+                if(check_valid_IP(item)) continue;
             }
-
         break;
 
 
@@ -112,4 +91,30 @@ export function verify(dataJson: any): boolean {
 
 function checkVersion(num: string): boolean {
     return /^0\.9\.[0-9]+$/.test(num);
+}
+
+function check_valid_IP(IP: string): boolean {
+  const isValidDomain = require('is-valid-domain');
+
+  let parts = IP.split(':');
+  console.log(parts.slice(0, parts.length-1));
+
+  if (isIPv6(parts.slice(0, parts.length-1).join(':'))) {            // is ipv6
+    const parsedPort = parseInt(parts[parts.length-1], 16);
+    return !isNaN(parsedPort) && parsedPort >= 0 && parsedPort <= 65535;
+  }
+
+  else if (isIP(parts[0])) { // works for ipv4
+    const parsedPort = parseInt(parts[parts.length-1]); 
+    return !isNaN(parsedPort) && parsedPort >= 0 && parsedPort <= 65535;
+  }
+
+  else if (isValidDomain(parts[0], {subdomain: true})) {
+    const parsedPort = parseInt(parts[parts.length-1], 16);
+    return !isNaN(parsedPort) && parsedPort >= 0 && parsedPort <= 65535;
+  }
+
+  // Not a valid IP
+  else return false;
+
 }

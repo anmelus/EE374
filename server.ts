@@ -6,7 +6,7 @@ import { appendFileSync, writeFileSync, readFileSync } from 'fs';
 import { hello, error, get_peers, peers, get_object, i_have_object, object, get_mem_pool, mempool, get_chain_tip, chaintip } from "./message_types"
 import { verify } from "./verify_format"
 
-const BOOTSTRAPS = ['45.63.84.226', '45.63.89.228', '144.202.122.8'];
+const BOOTSTRAPS = ['45.63.84.226:18018', '45.63.89.228:18018', '144.202.122.8:18018'];
 
 const HOST_PORT = 18018;
 const HOST = '0.0.0.0';
