@@ -1,5 +1,4 @@
 import net from 'net';
-import delay from 'delay';
 import { appendFileSync, writeFileSync, readFileSync } from 'fs';
 
 import { canonicalize } from 'json-canonicalize';
@@ -53,15 +52,17 @@ const server = net.createServer((socket) => {
 
     socket.write(canonicalize(hello())+ '\n');
     socket.write(canonicalize(get_peers())+ '\n');
-    let timeoutId;
+    let timeoutId: NodeJS.Timeout | null = null;
 
     socket.on('data', async (data) => {  // listen for data written by client
         //set timer here where server receives message
-        timeoutId = setTimeout(() => {
-            console.log("timing out");
-            socket.write(canonicalize(error("INVALID_FORMAT"))+ '\n');
-            socket.end();
-        }, 10000);
+        if (timeoutId === null) {
+            timeoutId = setTimeout(() => {
+                console.log("timing out");
+                socket.write(canonicalize(error("INVALID_FORMAT"))+ '\n');
+                socket.end();
+            }, 10000);
+        }
         let dataString = data.toString();;
         //console.log(dataString);
         let dataJson;
@@ -71,14 +72,12 @@ const server = net.createServer((socket) => {
         }
         const messages = buffer.split('\n');
 
-        if (dataString[dataString.length -1] === `\n`) {
-            clearTimeout(timeoutId);
-        }
-
         // TODO: Check if message is typed correctly, make a message_verification function
 
         if (messages.length > 1) {  // messages.length = num cmplt msgs + one empty string
             console.log(buffer);
+            clearTimeout(timeoutId);
+            timeoutId = null;
             for (const message of messages.slice(0, -1)){  // for each msg excluding empty string at end of messages array
                 let isJSON = true;
                 try {
