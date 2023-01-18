@@ -20,14 +20,16 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     }
     // console.log(JSON.stringify(obj) + '\n');
     client.write(canonicalize(obj) + '\n');
-    // client.write(`{"type":"hel`);
     //await delay(1000);
-    client.write(`{"type": "getpeers"}` + '\n');
+    // client.write(`{"type": "getpeers"}` + '\n');
     // await delay(100);
-    client.write(canonicalize({
-                            "type": "peers",
-                            "peers": BOOTSTRAPS
-                        }) + "\n");
+    client.write(`{"type": "get`);
+    await delay(1000);
+    client.write(`peers"}` + '\n');
+    // client.write(canonicalize({
+    //                         "type": "peers",
+    //                         "peers": BOOTSTRAPS
+    //                     }) + "\n");
     // TODO: It still acts strangely if you send multiple messages at the same time without delay, try removing the delay and see how it fails
 
     // client.write("Wbgygvf7rgtyv7tfbgy{{{" + "\n");

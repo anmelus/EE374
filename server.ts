@@ -50,11 +50,17 @@ const server = net.createServer((socket) => {
     //console.log(nodes);
 
     let buffer = '';
+
+    socket.write(canonicalize(hello()));
+    socket.write(canonicalize(get_peers()));
+    let timeoutId;
+
     socket.on('data', async (data) => {  // listen for data written by client
         //set timer here where server receives message
-        let timeoutId = setTimeout(() => {
-        socket.write(canonicalize(error("INVALID_FORMAT")));
-        socket.end();
+        timeoutId = setTimeout(() => {
+            console.log("timing out");
+            socket.write(canonicalize(error("INVALID_FORMAT")));
+            socket.end();
         }, 10000);
         let dataString = data.toString();;
         console.log(dataString);
@@ -64,14 +70,14 @@ const server = net.createServer((socket) => {
             buffer = "";
         }
         const messages = buffer.split('\n');
-
-        socket.write(canonicalize(hello()));
-        socket.write(canonicalize(get_peers()));
+        if (dataString === "\n") {
+            clearTimeout(timeoutId);
+        }
 
         // TODO: Check if message is typed correctly, make a message_verification function
 
         if (messages.length > 1) {  // messages.length = num cmplt msgs + one empty string
-            clearTimeout(timeoutId)  // clear timer when gets final line of message
+            clearTimeout(timeoutId);  // clear timer when gets final line of message
             console.log(buffer);
             for (const message of messages.slice(0, -1)){  // for each msg excluding empty string at end of messages array
                 let isJSON = true;
@@ -103,7 +109,6 @@ const server = net.createServer((socket) => {
                         if (msgCount.get(address) === 0) {
                             if (msgType === "hello") {                     
                                 msgCount.set(address, 1);
-                                socket.write(canonicalize(hello()));
                             } else {
                                 socket.write(canonicalize(error("INVALID_HANDSHAKE")));
                                 socket.end();
@@ -142,28 +147,28 @@ server.listen(HOST_PORT, HOST, () => {
 });
 
 // connect to one peer
-const client = new net.Socket();
-let nodeAddress;
-let nodePort;
-if (nodes[0].includes('::')) {
-    nodeAddress = nodes[0].split('::')[0];
-    nodePort = nodes[0].split('::')[1];
-} else {
-    nodeAddress = nodes[0].split(':')[0];
-    nodePort = nodes[0].split(':')[1];
-}
-console.log(Number(nodePort), nodeAddress);
-client.connect(Number(nodePort), nodeAddress, async () => {
-    const obj = {
-        "type": "hello",
-        "version": "0.9.0",
-        "agent": "Marabu-Core Client 0.9"
-    }
-    client.write(canonicalize(obj) + '\n');
-    await delay(5);
-    client.write(`{"type": "getpeers"}` + '\n');
-})
+// const client = new net.Socket();
+// let nodeAddress;
+// let nodePort;
+// if (nodes[0].includes('::')) {
+//     nodeAddress = nodes[0].split('::')[0];
+//     nodePort = nodes[0].split('::')[1];
+// } else {
+//     nodeAddress = nodes[0].split(':')[0];
+//     nodePort = nodes[0].split(':')[1];
+// }
+// console.log(Number(nodePort), nodeAddress);
+// client.connect(Number(nodePort), nodeAddress, async () => {
+//     const obj = {
+//         "type": "hello",
+//         "version": "0.9.0",
+//         "agent": "Marabu-Core Client 0.9"
+//     }
+//     client.write(canonicalize(obj) + '\n');
+//     await delay(5);
+//     client.write(`{"type": "getpeers"}` + '\n');
+// })
 
-client.on('data', (data) => {  // receive data from server
-    console.log(`Server sent: ${data}`);
-});
+// client.on('data', (data) => {  // receive data from server
+//     console.log(`Server sent: ${data}`);
+// });
