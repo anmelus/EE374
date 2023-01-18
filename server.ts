@@ -57,6 +57,7 @@ const server = net.createServer((socket) => {
 
     socket.on('data', async (data) => {  // listen for data written by client
         //set timer here where server receives message
+        console.log("PEE");
         timeoutId = setTimeout(() => {
             console.log("timing out");
             socket.write(canonicalize(error("INVALID_FORMAT"))+ '\n');
@@ -72,6 +73,7 @@ const server = net.createServer((socket) => {
         const messages = buffer.split('\n');
 
         if (dataString[dataString.length -1] === `\n`) {
+            console.log("check");
             clearTimeout(timeoutId);
         }
 
@@ -117,21 +119,23 @@ const server = net.createServer((socket) => {
                             socket.write(canonicalize(peers(nodes)) + '\n');
                         } else if (msgType === "peers") {
                             for (let item of dataJson.peers) {
-                                console.log(item);
+                                //console.log(item);
                                 if (!nodes.includes(item) && check_valid_IP(item)) {
                                     nodes.push(item);
                                     appendFileSync('peers.txt', '\n' + item); // Add nodes to local file
                                 }
                             }
                             
-                            console.log(nodes);
+                            //console.log(nodes);
                         }
                     }
                 }
             }
             buffer = messages[messages.length - 1];
         }
+        clearTimeout(timeoutId);
     });
+    
 
     // error checking. Only need to check for data, error, and closed connection.
     socket.on('error', (error) => {

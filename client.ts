@@ -24,7 +24,7 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     //client.write(`{"type": "getpeers"}` + '\n');
     await delay(100);
     client.write(`{"type": "get`);
-    await delay(20000);
+    await delay(100);
     client.write(`peers"}` + '\n');
     client.write(canonicalize({
                              "type": "peers",
