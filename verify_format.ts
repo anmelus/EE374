@@ -116,8 +116,12 @@ export function check_valid_IP(IP: string): boolean {
   const isValidDomain = require('is-valid-domain');
 
   let parts = IP.split(':');
+  let ipv6_no_brackets = parts.slice(0, parts.length-1).join(':')
+  ipv6_no_brackets = ipv6_no_brackets.replace(/[\[\]']+/g, '');
 
-  if (isIPv6(parts.slice(0, parts.length-1).join(':'))) {            // is ipv6
+  // console.log(parts.slice(0, parts.length-1).join(':'));
+
+  if (isIPv6(parts.slice(0, parts.length-1).join(':')) || isIPv6(ipv6_no_brackets)) {            // is ipv6
     const parsedPort = parseInt(parts[parts.length-1], 16);
     return !isNaN(parsedPort) && parsedPort >= 0 && parsedPort <= 65535;
   }

@@ -135,6 +135,9 @@ const server = net.createServer((socket) => {
                                     nodes.push(item);
                                     appendFileSync('peers.txt', '\n' + item); // Add nodes to local file
                                 }
+                                else {
+                                    console.log(item + " Not a valid peer!");
+                                }
                             }
                         }
                     }
