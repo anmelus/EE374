@@ -135,9 +135,6 @@ const server = net.createServer((socket) => {
                                     nodes.push(item);
                                     appendFileSync('peers.txt', '\n' + item); // Add nodes to local file
                                 }
-                                else {
-                                    console.log(item + " Not a valid peer!");
-                                }
                             }
                         }
                     }
@@ -160,35 +157,18 @@ const server = net.createServer((socket) => {
 server.listen(HOST_PORT, HOST, () => {
     console.log(`Server listening on ${HOST}:${HOST_PORT}`);
 });
-/*
+
 // connect to one peer
  const client = new net.Socket();
- let nodeAddress;
- let nodePort;
- console.log("!!!!!!!!!");
- if (nodes[0].includes('::')) {
-     nodeAddress = nodes[0].split('::')[0];
-     nodePort = nodes[0].split('::')[1];
- } else {
-     nodeAddress = nodes[0].split(':')[0];
-     nodePort = nodes[0].split(':')[1];
- }
- console.log("@@@@@@@@");
- console.log(Number(nodePort), nodeAddress);
- client.connect(Number(nodePort), nodeAddress, async () => {
+ client.connect(18018, '45.63.84.226', async () => {
      const obj = {
         "type": "hello",
          "version": "0.9.0",
         "agent": "Marabu-Core Client 0.9"
      }
      client.write(canonicalize(obj) + '\n');
-     await delay(5);
      client.write(`{"type": "getpeers"}` + '\n');
  })
- console.log("#########");
  client.on('data', (data) => {  // receive data from server
-    console.log("%%%%%%%%%");
-     console.log(`Server sent: ${data}`);
-     console.log("$$$$$$$$$");
+    console.log(`Server sent: ${data}`);
  });
- */
