@@ -50,8 +50,7 @@ const server = net.createServer((socket) => {
 
     let buffer = '';
 
-    socket.write(canonicalize(hello())+ '\n');
-    socket.write(canonicalize(get_peers())+ '\n');
+    socket.write(canonicalize(hello()) + '\n');
     let timeoutId: NodeJS.Timeout | null = null;
 
     let timeout_hello = setTimeout(() => {
@@ -122,6 +121,7 @@ const server = net.createServer((socket) => {
                             if (msgType === "hello") {                     
                                 shakenHands.set(address, true);
                                 clearTimeout(timeout_hello);
+                                socket.write(canonicalize(get_peers()) + '\n');
                             } else {
                                 socket.write(canonicalize(error("INVALID_HANDSHAKE")) + '\n');
                                 socket.end();
