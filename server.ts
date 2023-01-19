@@ -12,7 +12,7 @@ const HOST_PORT = 18018;
 const HOST = '0.0.0.0';
 
 const msgTypes = ["transaction", "block", "hello", "error", "getpeers", "peers", "getobject", "ihaveobject", "object", "getmempool", "mempool", "getchaintip", "chaintip"];
-let msgCount = new Map<string, number>();
+let shakenHands = new Map<string, boolean>();
 
 let nodes: Array<string> = new Array(); // didn't work with set, don't know why
 
@@ -34,7 +34,7 @@ const server = net.createServer((socket) => {
     const address = `${socket.remoteAddress}:`;
     const port = `${socket.remotePort}`;
     console.log(`Client connected: ${address}:${port}`);
-    msgCount.set(address, 0);
+    shakenHands.set(address, false);
 
     writeFileSync('peers.txt', nodes.join('\n')); // Refresh file just in case
 
@@ -94,20 +94,23 @@ const server = net.createServer((socket) => {
                     } else {
                         let msgType = dataJson.type;
 
-                        try { 
+                        try {
                             if(!verify(dataJson)) {
                                 console.log("Data formatted incorrectly.");
                                 socket.write(canonicalize(error("INVALID_FORMAT")) + '\n');
+                                if (!shakenHands.get(address)) {
+                                    socket.end();
+                                }
                             }
                         } 
-                        catch(e) {
+                        catch(e) { 
                             console.log("Data formatted incorrectly.");
                             socket.write(canonicalize(error("INVALID_FORMAT")) + '\n');
                         }
 
-                        if (msgCount.get(address) === 0) {
+                        if (!shakenHands.get(address)) {
                             if (msgType === "hello") {                     
-                                msgCount.set(address, 1);
+                                shakenHands.set(address, true);
                             } else {
                                 socket.write(canonicalize(error("INVALID_HANDSHAKE")) + '\n');
                                 socket.end();
