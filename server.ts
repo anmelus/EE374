@@ -72,9 +72,7 @@ const server = net.createServer((socket) => {
         }
         const messages = buffer.split('\n');
 
-        // TODO: Check if message is typed correctly, make a message_verification function
-
-        if (messages.length > 1) {  // messages.length = num cmplt msgs + one empty string
+        if (messages.length > 1) {  // messages.length = num cmplete msgs + one empty string
             console.log(buffer);
             clearTimeout(timeoutId);
             timeoutId = null;
@@ -86,11 +84,17 @@ const server = net.createServer((socket) => {
                     console.log("Not a JSON");
                     socket.write(canonicalize(error("INVALID_FORMAT")) + '\n');
                     isJSON = false;
+                    if (!shakenHands.get(address)) {
+                        socket.end();
+                    }
                 }
                 if (isJSON) {
                     if (!msgTypes.includes(dataJson.type)) {
                         console.log("Type Error");
                         socket.write(canonicalize(error("INVALID_FORMAT")) + '\n');
+                        if (!shakenHands.get(address)) {
+                            socket.end();
+                        }
                     } else {
                         let msgType = dataJson.type;
 
@@ -125,8 +129,6 @@ const server = net.createServer((socket) => {
                                     appendFileSync('peers.txt', '\n' + item); // Add nodes to local file
                                 }
                             }
-                            
-                            //console.log(nodes);
                         }
                     }
                 }
