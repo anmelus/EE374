@@ -54,6 +54,12 @@ const server = net.createServer((socket) => {
     socket.write(canonicalize(get_peers())+ '\n');
     let timeoutId: NodeJS.Timeout | null = null;
 
+    let timeout_hello = setTimeout(() => {
+        console.log("Hello not received in time");
+        socket.write(canonicalize(error("INVALID_FORMAT"))+ '\n');
+        socket.end();
+    }, 30000);
+
     socket.on('data', async (data) => {  // listen for data written by client
         //set timer here where server receives message
         if (timeoutId === null) {
@@ -115,6 +121,7 @@ const server = net.createServer((socket) => {
                         if (!shakenHands.get(address)) {
                             if (msgType === "hello") {                     
                                 shakenHands.set(address, true);
+                                clearTimeout(timeout_hello);
                             } else {
                                 socket.write(canonicalize(error("INVALID_HANDSHAKE")) + '\n');
                                 socket.end();
