@@ -55,7 +55,7 @@ export function error(name: string) {
 }
 
 export function get_peers() {
-    return { "type": "getpeers" }
+    return {"type": "getpeers"}
 }
 
 export function peers(peers: Array<string>) {
