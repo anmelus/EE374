@@ -2,8 +2,8 @@ import net from 'net';
 import { appendFileSync, writeFileSync, readFileSync } from 'fs';
 import { canonicalize } from 'json-canonicalize';
 import { hello, error, get_peers, peers, get_object, i_have_object, object, get_mem_pool, mempool, get_chain_tip, chaintip } from './message_types';
-import { verify, check_valid_IP, blake_object } from "./verify_format"
-
+import { verify, check_valid_IP } from "./verify_format"
+import { blake_object } from "./transacation"
 import Level from 'level-ts';
 
 // npm install blake2 --save

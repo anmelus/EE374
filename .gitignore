@@ -1,6 +1,12 @@
+# Personal Library I use for testing
+ponicode/
+
 # Everything in node_modules
 node_modules/
 
 # ignore yarn.lock
 yarn.lock
-yarn-error
+yarn-error.log
+
+# Prevent constant updating of peers txt
+peers.txt

@@ -80,11 +80,10 @@ export function i_have_object(objectid: string) {
 }
 
 export function object(ob: Object) {
-    let obj = {
+    return {
         "type": "object",
         "object": ob
     }
-    return obj
 }
 
 export function get_mem_pool() {
