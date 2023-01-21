@@ -149,10 +149,12 @@ const server = net.createServer((socket) => {
                                     }
                                     break;
 
+
+                                    // TODO: Fix, only sends objectid currently
                                 case("getobject"): {
                                     const OBJECT_ID = dataJson.objectid
                                     if (await db.exists(OBJECT_ID)) {
-                                        socket.write(canonicalize(i_have_object(OBJECT_ID)))
+                                        socket.write(canonicalize(object(OBJECT_ID)))
                                         console.log("Sent object " + OBJECT_ID)
                                     }
                                     break;
