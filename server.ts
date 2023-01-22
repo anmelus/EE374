@@ -171,7 +171,7 @@ const server = net.createServer((socket) => {
 
                                 case("object"): {
                                     // TODO: Check validity of objects
-                                    let OBJECT_ID = blake_object(JSON.stringify(dataJson.object))
+                                    let OBJECT_ID = blake_object(canonicalize(JSON.stringify(dataJson.object)))
                                     console.log(await db.get(OBJECT_ID))
                                     if (!await db.exists(OBJECT_ID)) {
                                         await db.put(OBJECT_ID, dataJson.object)
