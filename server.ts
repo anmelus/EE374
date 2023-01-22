@@ -154,7 +154,8 @@ const server = net.createServer((socket) => {
                                 case("getobject"): {
                                     const OBJECT_ID = dataJson.objectid
                                     if (await db.exists(OBJECT_ID)) {
-                                        socket.write(canonicalize(object(OBJECT_ID)))
+                                        let obj = await db.get(OBJECT_ID)
+                                        socket.write(canonicalize(object(obj)))
                                         console.log("Sent object " + OBJECT_ID)
                                     }
                                     break;
