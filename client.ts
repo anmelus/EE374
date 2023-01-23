@@ -39,12 +39,12 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     console.log(JSON.stringify(obj) + '\n');
     client.write(canonicalize(obj) + '\n');
     await delay(1000);
-    client.write(canonicalize(obj))
+    // client.write(canonicalize(obj))
 
     await delay(1000);
     const get_obj = {
       "type": "getobject",
-      "objectid": "0024839ec9632d382486ba7aac7e0bda3b4bda1d4bd79be9ae78e7e1e813ddd8"
+      "objectid": "36496e13e8ad98f75321264b0a7980bfe25d4f1226ad1f8da1d8cdb82d8119ec"
     }
     client.write(canonicalize(get_obj) + '\n')
 

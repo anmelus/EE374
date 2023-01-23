@@ -1,4 +1,5 @@
 import { isIP, isIPv6 } from 'net';
+import Level from 'level-ts';
 
 export function verify(dataJson: any): boolean {
     /*
@@ -74,10 +75,40 @@ export function verify(dataJson: any): boolean {
 
           break;
 
+//            {
+//   "type": "transaction",
+//   "inputs": [
+//     {
+//       "outpoint": {
+//         "txid": "f71408bf847d7dd15824574a7cd4afdfaaa2866286910675cd3fc371507aa196",
+//         "index": 0
+//       },
+//       "sig": "3869a9ea9e7ed926a7c8b30fb71f6ed151a132b03fd5dae764f015c98271000e7da322dbcfc97af7931c23c0fae060e102446ccff0f54ec00f9978f3a69a6f0f"
+//     }
+//   ],
+//   "outputs": [
+//     {
+//       "pubkey": "077a2683d776a71139fd4db4d00c16703ba0753fc8bdc4bd6fc56614e659cde3",
+//       "value": 5100000000
+//     }
+//   ]
+// }
         case "transaction":
-          
-
-
+            interface object_key {
+              "object": {
+                  "type": string,
+                  "txids": Array<string>,
+                  "nonce": string,
+                  "previd": string,
+                  "created": string,
+                  "T": string
+              }
+            }
+            var db = new Level<object_key>('./database')
+            
+            let OUTPOINT = dataJson.inputs.outpoint
+            
+            look_through_ids(OUTPOINT)
 
         case "getmempool":
           // code for the "getmempool" case
@@ -145,4 +176,28 @@ export function blake_object(object: string): string {
   var objectid = blake2.createHash('blake2s')
   objectid.update(Buffer.from(object));
   return objectid.digest("hex")
+}
+
+function look_through_ids(OUTPOINT: string) : boolean {
+  interface object_key {
+    "object": {
+        "type": string,
+        "txids": Array<string>,
+        "nonce": string,
+        "previd": string,
+        "created": string,
+        "T": string
+    }
+  }
+  var db = new Level<object_key>('./database')
+
+  const data = db.iterateFind((value, key) => {
+    for (let txid in value.object.txids) {
+      if (txid === OUTPOINT) return true
+    }
+
+    return false
+  }); 
+
+  return false
 }
