@@ -149,8 +149,6 @@ const server = net.createServer((socket) => {
                                     }
                                     break;
 
-
-                                    // TODO: Fix, only sends objectid currently
                                 case("getobject"): {
                                     const OBJECT_ID = dataJson.objectid
                                     if (await db.exists(OBJECT_ID)) {
@@ -187,9 +185,7 @@ const server = net.createServer((socket) => {
                                     const all = await db.all()
                                     for (let item in all) {
                                         writeFileSync('database.txt', item + '\n')
-                                    }
-
-                                    
+                                    }                                    
                                     break;
                                 }
 
