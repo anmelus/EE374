@@ -1,5 +1,7 @@
 import { isIP, isIPv6 } from 'net';
-import Level from 'level-ts';
+import level from 'level-ts';
+import { object } from './message_types';
+
 
 export function verify(dataJson: any): boolean {
     /*
@@ -76,28 +78,15 @@ export function verify(dataJson: any): boolean {
           break;
 
         case "transaction":
-            interface object_key {
-              "object": {
-                  "type": string,
-                  "txids": Array<string>,
-                  "nonce": string,
-                  "previd": string,
-                  "created": string,
-                  "T": string
-              }
-            }
-            var db = new Level<object_key>('./database')
-            
             let TXIDS = [dataJson.inputs[0].outpoint.txid]
 
-            try {
-              let pass = look_through_ids(TXIDS)
-              console.log("Pass: " + pass)
-            } catch(error) {
-              console.log("nyahhhhh")
-            }
-            
-            console.log(TXIDS)
+            look_through_ids(TXIDS).then((result) => {
+              if (result) console.log("Successful TXID Match")
+              else {
+                console.log("No TXID found.")
+                // TODO: Return error here
+              }
+            });
             
             break;
 
@@ -169,32 +158,19 @@ export function blake_object(object: string): string {
   return objectid.digest("hex")
 }
 
-function look_through_ids(TXIDS: Array<string>) {
-  interface object_key {
-    "object": {
-        "type": string,
-        "txids": Array<string>,
-        "nonce": string,
-        "previd": string,
-        "created": string,
-        "T": string
-    }
-  }
-
-  const db = new Level<object_key>('./database')
+async function look_through_ids(TXIDS: Array<string>) {
+  const db = new level('./database')
 
   let x = false
 
-  const data = db.iterateFind((value, key) => {
-      console.log(value)
-      console.log(typeof value)
-      for (let i=0; i < TXIDS.length; i++) {
-        console.log(value.object.txids)
-        if (value.object.txids.includes(TXIDS[i])) {
-          x = true
-          return true
-        }
-      }
+  const data = await db.iterateFind((value, key) => {
+    console.log(value)
+    if (value === undefined) { return false }
+    else if (value.txids.includes(TXIDS[0])) {
+      console.log("Worked")
+      x = true
+      return true
+    }
 
     return false
   }); 

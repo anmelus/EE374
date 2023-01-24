@@ -3,7 +3,7 @@ import { appendFileSync, writeFileSync, readFileSync } from 'fs';
 import { canonicalize } from 'json-canonicalize';
 import { hello, error, get_peers, peers, get_object, i_have_object, object, get_mem_pool, mempool, get_chain_tip, chaintip } from './message_types';
 import { verify, check_valid_IP, blake_object } from "./verify_format"
-import Level from 'level-ts';
+import level from 'level-ts';
 
 // npm install blake2 --save
 
@@ -25,7 +25,7 @@ interface object_key {
         "T": string
     }
 }
-const db = new Level<object_key>('./database')
+const db = new level<object_key>('./database')
 
 try {
     let file_content = readFileSync('peers.txt', 'utf8'); 
@@ -111,7 +111,7 @@ const server = net.createServer((socket) => {
 
                         try {
                             if(!verify(dataJson)) {
-                                console.log("Data formatted incorrectly. Not a valid JSON");
+                                console.log("Data formatted incorrectly.");
                                 socket.write(canonicalize(error("INVALID_FORMAT")) + '\n');
                                 if (!shakenHands.get(address)) {
                                     socket.end();
