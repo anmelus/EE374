@@ -1,6 +1,7 @@
 import { isIP, isIPv6 } from 'net';
 import level from 'level-ts';
 import { object } from './message_types';
+import * as ed from '@noble/ed25519';
 
 
 export function verify(dataJson: any): boolean {
@@ -78,6 +79,10 @@ export function verify(dataJson: any): boolean {
           break;
 
         case "transaction":
+            if(!verifyOutput(dataJson.outputs)) {
+              return false;
+            }
+
             let TXIDS = [dataJson.inputs[0].outpoint.txid]
             let index = dataJson.inputs[0].outpoint.txid + 1
 
@@ -162,6 +167,22 @@ export function blake_object(object: string): string {
   var objectid = blake2.createHash('blake2s')
   objectid.update(Buffer.from(object));
   return objectid.digest("hex")
+}
+
+async function verifySignature(signature: string, hash: string, publicKey: string) {
+  const isValid = await ed.verify(signature, hash, publicKey);
+}
+
+export function verifyOutput(outputs: any): boolean {
+  for (let output of outputs) {
+  if (!output.hasOwnProperty("pubkey") || !output.hasOwnProperty("value")) {
+    return false;
+  }
+  else if (output['value'] < 0 && Number.isInteger(parseInt(output['value']))) {
+    return false;
+  } 
+}
+  return true;
 }
 
 // TODO: Configure for multiple strings
