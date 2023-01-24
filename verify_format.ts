@@ -79,14 +79,7 @@ export function verify(dataJson: any): boolean {
           break;
 
         case "transaction":
-            if(!verifyOutput(dataJson.outputs)) {
-              return false;
-            }
-
-            let TXIDS = [dataJson.inputs[0].outpoint.txid]
-            let index = dataJson.inputs[0].outpoint.txid + 1
-
-            look_through_ids(TXIDS).then((result) => {
+            verifyTx(dataJson).then((result) => {
               if (result) console.log("Successful TXID Match")
               else {
                 console.log("No TXID found.")
@@ -94,10 +87,21 @@ export function verify(dataJson: any): boolean {
               }
             });
 
-            if (index < dataJson.outputs.length) {
-              // TODO: Return error here
-              return false
-            }
+            // let TXIDS = [dataJson.inputs[0].outpoint.txid]
+            // let index = dataJson.inputs[0].outpoint.txid + 1
+
+            // look_through_ids(TXIDS).then((result) => {
+            //   if (result) console.log("Successful TXID Match")
+            //   else {
+            //     console.log("No TXID found.")
+            //     // TODO: Return error here
+            //   }
+            // });
+
+            // if (index < dataJson.outputs.length) {
+            //   // TODO: Return error here
+            //   return false
+            // }
             
             break;
 
@@ -171,35 +175,48 @@ export function blake_object(object: string): string {
 
 async function verifySignature(signature: string, hash: string, publicKey: string) {
   const isValid = await ed.verify(signature, hash, publicKey);
+  return isValid;
 }
 
-export function verifyOutput(outputs: any): boolean {
-  for (let output of outputs) {
+export function verifyOutput(output: any): boolean {
   if (!output.hasOwnProperty("pubkey") || !output.hasOwnProperty("value")) {
     return false;
   }
-  else if (output['value'] < 0 && Number.isInteger(parseInt(output['value']))) {
+  if (output['value'] < 0 || !Number.isInteger(parseInt(output['value']))) {
     return false;
-  } 
-}
+  }
   return true;
 }
 
-// TODO: Configure for multiple strings
-async function look_through_ids(TXIDS: Array<string>) {
+async function verifyTx(data : any) {
   const db = new level('./database')
-
-  let x = false
-
-  const data = await db.iterateFind((value, key) => {
-    console.log(value)
-    if (value.txids.includes(TXIDS[0])) {
-      x = true
-      return true
+  let inputSum : number = 0;
+  let outputSum : number = 0;
+  for (let input of data.inputs) {
+    // put all of this in a separate verifyInput function
+    let outpoint = input.outpoint;
+    if (!await db.exists(outpoint.txid)) {
+      return false;
     }
-
-    return false
-  }); 
-
-  return x
+    let tx = await db.get(outpoint.txid);
+    if (tx.outputs.length <= outpoint.index) {
+      return false;
+    }
+    let outpointPubKey = tx.outputs[outpoint.index].pubkey;
+    let sig: string = input.signature.sig;
+    if (!verifySignature(sig, outpoint.txid, outpointPubKey)) {
+      return false;
+    }
+    inputSum += tx.outputs[outpoint.index].value;
+  }
+  for (let output of data.outputs) {
+    if (!verifyOutput(output)) {
+      return false;
+    }
+    outputSum += output.value;
+  }
+  if (outputSum > inputSum) {
+    return false;
+  }
+  return true
 }
