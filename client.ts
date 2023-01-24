@@ -54,6 +54,8 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     "outputs":[{"pubkey":"958f8add086cc348e229a3b6590c71b7d7754e42134a127a50648bf07969d9a0","value":10}],"type":"transaction"}
     
     client.write(canonicalize(trans) + '\n');
+    await delay(1000);
+    console.log('')
     // await delay(100);
     // client.write(`{"type": "get`);
     // await delay(100);

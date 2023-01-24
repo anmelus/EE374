@@ -88,11 +88,18 @@ export function verify(dataJson: any): boolean {
             }
             var db = new Level<object_key>('./database')
             
-            let TXIDS = dataJson.inputs[0].outpoint.txid
+            let TXIDS = [dataJson.inputs[0].outpoint.txid]
+
+            try {
+              let pass = look_through_ids(TXIDS)
+              console.log("Pass: " + pass)
+            } catch(error) {
+              console.log("nyahhhhh")
+            }
             
             console.log(TXIDS)
-            let pass = look_through_ids(TXIDS)
-            console.log("Pass: " + pass)
+            
+            break;
 
         case "getmempool":
           // code for the "getmempool" case
@@ -178,11 +185,11 @@ function look_through_ids(TXIDS: Array<string>) {
 
   let x = false
 
-  // TODO: Need to modify this so that it works if TXIDS is also a list of strings.
   const data = db.iterateFind((value, key) => {
       console.log(value)
       console.log(typeof value)
       for (let i=0; i < TXIDS.length; i++) {
+        console.log(value.object.txids)
         if (value.object.txids.includes(TXIDS[i])) {
           x = true
           return true
