@@ -158,6 +158,7 @@ export function blake_object(object: string): string {
   return objectid.digest("hex")
 }
 
+// TODO: Configure for multiple strings
 async function look_through_ids(TXIDS: Array<string>) {
   const db = new level('./database')
 
@@ -165,9 +166,7 @@ async function look_through_ids(TXIDS: Array<string>) {
 
   const data = await db.iterateFind((value, key) => {
     console.log(value)
-    if (value === undefined) { return false }
-    else if (value.txids.includes(TXIDS[0])) {
-      console.log("Worked")
+    if (value.txids.includes(TXIDS[0])) {
       x = true
       return true
     }

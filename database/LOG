@@ -1,3 +1,5 @@
-2023/01/23-20:27:46.700 4ffc Recovering log #218
-2023/01/23-20:27:46.706 4ffc Delete type=0 #218
-2023/01/23-20:27:46.706 4ffc Delete type=3 #217
+2023/01/23-20:38:51.388 5c84 Recovering log #7
+2023/01/23-20:38:51.388 5c84 Level-0 table #9: started
+2023/01/23-20:38:51.391 5c84 Level-0 table #9: 579 bytes OK
+2023/01/23-20:38:51.394 5c84 Delete type=0 #7
+2023/01/23-20:38:51.394 5c84 Delete type=3 #6
