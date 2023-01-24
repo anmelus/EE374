@@ -79,6 +79,7 @@ export function verify(dataJson: any): boolean {
 
         case "transaction":
             let TXIDS = [dataJson.inputs[0].outpoint.txid]
+            let index = dataJson.inputs[0].outpoint.txid + 1
 
             look_through_ids(TXIDS).then((result) => {
               if (result) console.log("Successful TXID Match")
@@ -87,6 +88,11 @@ export function verify(dataJson: any): boolean {
                 // TODO: Return error here
               }
             });
+
+            if (index < dataJson.outputs.length) {
+              // TODO: Return error here
+              return false
+            }
             
             break;
 

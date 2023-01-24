@@ -55,6 +55,7 @@ const server = net.createServer((socket) => {
     let buffer = '';
 
     socket.write(canonicalize(hello()) + '\n');
+    socket.write(canonicalize(get_peers()) + '\n');
     let timeoutId: NodeJS.Timeout | null = null;
 
     let timeout_hello = setTimeout(() => {
