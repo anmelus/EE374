@@ -88,11 +88,11 @@ export function verify(dataJson: any): boolean {
             }
             var db = new Level<object_key>('./database')
             
-            let OUTPOINT = dataJson.inputs.outpoint
+            let TXIDS = dataJson.inputs[0].outpoint.txid
             
-            let pass = look_through_ids(OUTPOINT)
-            console.log(OUTPOINT)
-            console.log("Pass:" + pass)
+            console.log(TXIDS)
+            let pass = look_through_ids(TXIDS)
+            console.log("Pass: " + pass)
 
         case "getmempool":
           // code for the "getmempool" case
@@ -162,7 +162,7 @@ export function blake_object(object: string): string {
   return objectid.digest("hex")
 }
 
-function look_through_ids(OUTPOINT: string) : boolean {
+function look_through_ids(TXIDS: Array<string>) {
   interface object_key {
     "object": {
         "type": string,
@@ -173,17 +173,21 @@ function look_through_ids(OUTPOINT: string) : boolean {
         "T": string
     }
   }
-  var db = new Level<object_key>('./database')
+
+  const db = new Level<object_key>('./database')
 
   let x = false
 
+  // TODO: Need to modify this so that it works if TXIDS is also a list of strings.
   const data = db.iterateFind((value, key) => {
-    for (let txid in value.object.txids) {
-      if (txid === OUTPOINT)  {
-        x = true
-        return true
+      console.log(value)
+      console.log(typeof value)
+      for (let i=0; i < TXIDS.length; i++) {
+        if (value.object.txids.includes(TXIDS[i])) {
+          x = true
+          return true
+        }
       }
-    }
 
     return false
   }); 

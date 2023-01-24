@@ -111,7 +111,7 @@ const server = net.createServer((socket) => {
 
                         try {
                             if(!verify(dataJson)) {
-                                console.log("Data formatted incorrectly.");
+                                console.log("Data formatted incorrectly. Not a valid JSON");
                                 socket.write(canonicalize(error("INVALID_FORMAT")) + '\n');
                                 if (!shakenHands.get(address)) {
                                     socket.end();
