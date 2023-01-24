@@ -180,17 +180,19 @@ function look_through_ids(TXIDS: Array<string>) {
         "T": string
     }
   }
+  
 
-  const db = new Level<object_key>('./database')
+  const db = new Level<object_key>('./database');
 
   let x = false
 
   const data = db.iterateFind((value, key) => {
-      console.log(value)
+      console.log("@@@@@@@@@@@@");
+      console.log(value.object);
       console.log(typeof value)
       for (let i=0; i < TXIDS.length; i++) {
-        console.log(value.object.txids)
-        if (value.object.txids.includes(TXIDS[i])) {
+        console.log(value.object['txids'])
+        if (value.object['txids'].includes(TXIDS[i])) {
           x = true
           return true
         }

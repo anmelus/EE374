@@ -172,6 +172,9 @@ const server = net.createServer((socket) => {
                                     let OBJECT_ID = blake_object(canonicalize(JSON.stringify(dataJson.object)))
                                     console.log(await db.get(OBJECT_ID))
                                     if (!await db.exists(OBJECT_ID)) {
+                                        // first argument should be hash
+                                        // second argument should be transaction id
+                                        // .get(transaction id) to get a previous transaction
                                         await db.put(OBJECT_ID, dataJson.object)
                                         console.log("Added object " + OBJECT_ID)
                                         
