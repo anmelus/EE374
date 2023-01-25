@@ -75,53 +75,38 @@ export function verify(dataJson: any): boolean {
           if (!dataJson.hasOwnProperty("object")) {
             return false;
           }
+          if (dataJson.object.type === "transaction" && !isValidTxFormat(dataJson)) { 
+            return false;
+          } 
+          if (dataJson.object.type === "block" && !isValidBlockFormat(dataJson)) {
+            return false;
+          }
 
           break;
 
         case "transaction":
-            verifyTx(dataJson).then((result) => {
+            verifyTxContent(dataJson).then((result) => {
               if (result) console.log("Successful TXID Match")
               else {
                 console.log("No TXID found.")
                 // TODO: Return error here
               }
             });
-
-            // let TXIDS = [dataJson.inputs[0].outpoint.txid]
-            // let index = dataJson.inputs[0].outpoint.txid + 1
-
-            // look_through_ids(TXIDS).then((result) => {
-            //   if (result) console.log("Successful TXID Match")
-            //   else {
-            //     console.log("No TXID found.")
-            //     // TODO: Return error here
-            //   }
-            // });
-
-            // if (index < dataJson.outputs.length) {
-            //   // TODO: Return error here
-            //   return false
-            // }
             
             break;
-
         case "getmempool":
-          // code for the "getmempool" case
           break;
         case "mempool":
           if (!dataJson.hasOwnProperty("txids")) {
             return false;
           }
-          // code for the "mempool" case
           break;
         case "getchaintip":
-          // code for the "getchaintip" case
           break;
         case "chaintip":
           if (!dataJson.hasOwnProperty("blockid")) {
             return false;
           }
-          // code for the "chaintip" case
           break;
 
         default:
@@ -165,7 +150,7 @@ export function check_valid_IP(IP: string): boolean {
 }
 
 
-export function blake_object(object: string): string {
+export function blakeObject(object: string): string {
   /* Takes the canoncalized version of object.object (including key) and returns the blake2s hashed value */
   var blake2 = require('blake2')
   var objectid = blake2.createHash('blake2s')
@@ -188,7 +173,42 @@ export function verifyOutput(output: any): boolean {
   return true;
 }
 
-async function verifyTx(data : any) {
+/* check block object contains all required fields */
+function isValidBlockFormat(dataJson : any) {
+  if (!dataJson.object.hasOwnProperty("txids") 
+      || !dataJson.object.hasOwnProperty("nonce")
+      || !dataJson.object.hasOwnProperty("previd") 
+      || !dataJson.object.hasOwnProperty("created")
+      || !dataJson.object.hasOwnProperty("T")) {
+        return false;
+  }
+  return true;
+}
+
+/* check transaction object contains all required fields */
+function isValidTxFormat(dataJson : any) {
+  if ((!dataJson.object.hasOwnProperty("inputs") && !dataJson.object.hasOwnProperty("height"))  // transactions contains outputs and either inputs or height
+      || !dataJson.object.hasOwnProperty("outputs")) {
+        return false;
+  }
+  for (let output of dataJson.object.outputs) {
+    if (!output.hasOwnProperty("pubkey") || !output.hasOwnProperty("value")) {  // each output must contain a public key and a value
+      return false;
+    }
+  }
+  if(!dataJson.object.hasOwnProperty("height")) {  // coin base transaction has no inputs property to check so format verification is complete
+    return true;
+  }
+  for (let input of dataJson.object.inputs) {  // each input must contain a signature and an outpoint containing a txid and index
+    if (!input.hasOwnProperty("sig") || !input.hasOwnProperty("outpoint")
+        || !input.outpoint.hasOwnProperty("txid") || !input.outpoint.hasOwnProperty("index")) {
+          return false;
+    }
+  }
+  return true;
+}
+
+async function verifyTxContent(data : any) {
   const db = new level('./database')
   let inputSum : number = 0;
   let outputSum : number = 0;

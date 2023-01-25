@@ -2,7 +2,7 @@ import net from 'net';
 import { appendFileSync, writeFileSync, readFileSync } from 'fs';
 import { canonicalize } from 'json-canonicalize';
 import { hello, error, get_peers, peers, get_object, i_have_object, object, get_mem_pool, mempool, get_chain_tip, chaintip } from './message_types';
-import { verify, check_valid_IP, blake_object } from "./verify_format"
+import { verify, check_valid_IP, blakeObject } from "./verify_format"
 import level from 'level-ts';
 
 // npm install blake2 --save
@@ -25,7 +25,8 @@ interface object_key {
         "T": string
     }
 }
-const db = new level<object_key>('./database')
+const db = new level/* <object_key> */('./database');  // commented out object_key type as database stores diff structured block and transaction objects 
+let clients: Set<net.Socket> = new Set();  // moved out of createServer's connection istener to aggregate set rather than re-init per client 
 
 try {
     let file_content = readFileSync('peers.txt', 'utf8'); 
@@ -40,10 +41,11 @@ try {
 }
 
 const server = net.createServer((socket) => {
-    const address = `${socket.remoteAddress}:`
-    const port = `${socket.remotePort}`
-    console.log(`Client connected: ${address}:${port}`)
-    shakenHands.set(address, false)
+    const address = `${socket.remoteAddress}:`;
+    const port = `${socket.remotePort}`;
+    console.log(`Client connected: ${address}:${port}`);
+    clients.add(socket);
+    shakenHands.set(address, false);
 
     writeFileSync('peers.txt', nodes.join('\n'));
 
@@ -56,19 +58,18 @@ const server = net.createServer((socket) => {
 
     socket.write(canonicalize(hello()) + '\n');
     socket.write(canonicalize(get_peers()) + '\n');
-    let timeoutId: NodeJS.Timeout | null = null;
 
+    /* Timeout if a hello message is not received within 30 seconds */ 
     let timeout_hello = setTimeout(() => {
         console.log("Hello not received in time");
         socket.write(canonicalize(error("INVALID_FORMAT"))+ '\n');
         socket.end();
     }, 30000);
 
-    let clients: Set<net.Socket> = new Set();
-    clients.add(socket)
+    let timeoutId: NodeJS.Timeout | null = null;
 
     socket.on('data', async (data) => { 
-        // Data Timer
+        /* Timeout if a message is not completed within 10 seconds */
         if (timeoutId === null) {
             timeoutId = setTimeout(() => {
                 console.log("timing out");
@@ -76,19 +77,24 @@ const server = net.createServer((socket) => {
                 socket.end();
             }, 10000);
         }
+
+        /* Add data from client to a buffer */
         let dataString = data.toString();;
         let dataJson;
         buffer += dataString;
-        if (buffer.length > 100000) {
+        if (buffer.length > 100000) {  // handle buffer overflow
             buffer = "";
         }
-        const messages = buffer.split('\n');
 
-        if (messages.length > 1) {  // messages.length = num cmplete msgs + one empty string
-            console.log(buffer);
+        /* Separate and handle individual messages within buffer */
+        const messages = buffer.split('\n');
+        if (messages.length > 1) {
+            // console.log(buffer);
             clearTimeout(timeoutId);
             timeoutId = null;
             for (const message of messages.slice(0, -1)){  // for each msg excluding empty string at end of messages array
+                
+                /* Check if message received is JSON */
                 let isJSON = true;
                 try {
                     dataJson = JSON.parse(message);
@@ -100,6 +106,7 @@ const server = net.createServer((socket) => {
                         socket.end();
                     }
                 }
+
                 if (isJSON) {
                     if (!msgTypes.includes(dataJson.type)) {
                         console.log("Type Error");
@@ -109,8 +116,8 @@ const server = net.createServer((socket) => {
                         }
                     } else {
                         let msgType = dataJson.type;
-
-                        try {
+                        
+                        try {  // validate message format
                             if(!verify(dataJson)) {
                                 console.log("Data formatted incorrectly.");
                                 socket.write(canonicalize(error("INVALID_FORMAT")) + '\n');
@@ -118,23 +125,26 @@ const server = net.createServer((socket) => {
                                     socket.end();
                                 }
                             }
-                        } 
-                        catch(e) { 
+                        } catch(e) { 
                             console.log("Data formatted incorrectly.");
                             socket.write(canonicalize(error("INVALID_FORMAT")) + '\n');
+                            if (!shakenHands.get(address)) {
+                                socket.end();
+                            }
                         }
 
+                        /* Check for valid handshake and disconnect if not received */
                         if (!shakenHands.get(address)) {
                             if (msgType === "hello") {                     
                                 shakenHands.set(address, true);
                                 clearTimeout(timeout_hello);
-                                socket.write(canonicalize(get_peers()) + '\n');
                             } else {
                                 socket.write(canonicalize(error("INVALID_HANDSHAKE")) + '\n');
                                 socket.end();
                             }
                         } 
 
+                        /* handle valid message */
                         else {
                             switch(msgType) {
                                 case("getpeers"):
@@ -151,36 +161,32 @@ const server = net.createServer((socket) => {
                                     break;
 
                                 case("getobject"): {
-                                    const OBJECT_ID = dataJson.objectid
-                                    if (await db.exists(OBJECT_ID)) {
-                                        let obj = await db.get(OBJECT_ID)
+                                    const objectId = dataJson.objectid
+                                    if (await db.exists(objectId)) {
+                                        let obj = await db.get(objectId)
                                         socket.write(canonicalize(object(obj)))
-                                        console.log("Sent object " + OBJECT_ID)
+                                        console.log("Sent object " + objectId)
                                     }
                                     break;
                                 }
 
                                 case("ihaveobject"): {
-                                    const OBJECT_ID = dataJson.objectid
-                                    if (!await db.exists(OBJECT_ID)) {
-                                        socket.write(canonicalize(get_object(OBJECT_ID)))
+                                    const objectId = dataJson.objectid
+                                    if (!await db.exists(objectId)) {
+                                        socket.write(canonicalize(get_object(objectId)))
                                     }
                                     break;
                                 }
 
                                 case("object"): {
-                                    // TODO: Check validity of objects
-                                    let OBJECT_ID = blake_object(canonicalize(JSON.stringify(dataJson.object)))
-                                    if (!await db.exists(OBJECT_ID)) {
-                                        // first argument should be hash
-                                        // second argument should be transaction id
-                                        // .get(transaction id) to get a previous transaction
-                                        await db.put(OBJECT_ID, dataJson.object)
-                                        console.log("Added object " + OBJECT_ID)
-                                        
+                                    let objectId = blakeObject(canonicalize(JSON.stringify(dataJson.object)))
+                                    if (!await db.exists(objectId)) {
+
+                                        await db.put(objectId, dataJson.object)
+                                        console.log("Added object " + objectId)
                                         // Broadcast the message to all connected peers (including sender)
                                         clients.forEach((client) => {
-                                            client.write(canonicalize(i_have_object(OBJECT_ID)));
+                                            client.write(canonicalize(i_have_object(objectId)));
                                         });
                                     }
                                         
@@ -203,7 +209,6 @@ const server = net.createServer((socket) => {
         }
     });
     
-
     socket.on('error', (error) => {
         console.error(`Client ${address} error: ${error}`);
     });
@@ -217,12 +222,12 @@ server.listen(HOST_PORT, HOST, () => {
     console.log(`Server listening on ${HOST}:${HOST_PORT}`);
 });
 
-// connect to one peer
- const client = new net.Socket();
- client.connect(18018, '45.63.84.226', async () => {
-    client.write(canonicalize(hello()) + '\n');
-    client.write(canonicalize(get_peers()) + '\n');
- })
- client.on('data', (data) => {  // receive data from server
-    console.log(`Server sent: ${data}`);
- });
+// // connect to one peer
+//  const client = new net.Socket();
+//  client.connect(18018, '45.63.84.226', async () => {
+//     client.write(canonicalize(hello()) + '\n');
+//     client.write(canonicalize(get_peers()) + '\n');
+//  })
+//  client.on('data', (data) => {  // receive data from server
+//     console.log(`Server sent: ${data}`);
+//  });
