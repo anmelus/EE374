@@ -75,7 +75,7 @@ export function verify(dataJson: any): boolean {
           if (!dataJson.hasOwnProperty("object")) {
             return false;
           }
-          if (dataJson.object.type === "transaction" && !isValidTxFormat(dataJson)) { 
+          if (dataJson.object.type === "transaction" && !isValidTXFormat(dataJson)) { 
             return false;
           } 
           if (dataJson.object.type === "block" && !isValidBlockFormat(dataJson)) {
@@ -85,7 +85,7 @@ export function verify(dataJson: any): boolean {
           break;
 
         case "transaction":
-            verifyTxContent(dataJson).then((result) => {
+            verifyTXContent(dataJson).then((result) => {
               if (result) console.log("Successful TXID Match")
               else {
                 console.log("No TXID found.")
@@ -158,13 +158,13 @@ export function blakeObject(object: string): string {
   return objectid.digest("hex")
 }
 
-async function verifySignature(signature: string, hash: string, publicKey: string) {
+async function isValidSignature(signature: string, hash: string, publicKey: string) {
   const isValid = await ed.verify(signature, hash, publicKey);
   return isValid;
 }
 
-export function verifyOutput(output: any): boolean {
-  if (!output.hasOwnProperty("pubkey") || !output.hasOwnProperty("value")) {
+export function isValidOutput(output: any): boolean {
+   if (!output.hasOwnProperty("pubkey") || !output.hasOwnProperty("value")) {
     return false;
   }
   if (output['value'] < 0 || !Number.isInteger(parseInt(output['value']))) {
@@ -186,13 +186,13 @@ function isValidBlockFormat(dataJson : any) {
 }
 
 /* check transaction object contains all required fields */
-function isValidTxFormat(dataJson : any) {
+function isValidTXFormat(dataJson : any) {
   if ((!dataJson.object.hasOwnProperty("inputs") && !dataJson.object.hasOwnProperty("height"))  // transactions contains outputs and either inputs or height
       || !dataJson.object.hasOwnProperty("outputs")) {
         return false;
   }
   for (let output of dataJson.object.outputs) {
-    if (!output.hasOwnProperty("pubkey") || !output.hasOwnProperty("value")) {  // each output must contain a public key and a value
+    if (!isValidOutput(output)) {  // each output must contain a public key and a value
       return false;
     }
   }
@@ -208,35 +208,38 @@ function isValidTxFormat(dataJson : any) {
   return true;
 }
 
-async function verifyTxContent(data : any) {
+// takes dataJson.object (must be type == transaction) argument. Don't feel like writing the interface out for that type right now.
+export async function verifyTXContent(data : any) : Promise<string | true> {
   const db = new level('./database')
   let inputSum : number = 0;
   let outputSum : number = 0;
   for (let input of data.inputs) {
-    // put all of this in a separate verifyInput function
     let outpoint = input.outpoint;
     if (!await db.exists(outpoint.txid)) {
-      return false;
+      // This error type look like it is meant to be emitted in response to a getobject 
+      // msg but it may also be appropriate for use when an outpoint cannot be found.
+      // see Ed -> https://edstem.org/us/courses/31092/discussion/2430962
+      return "UNKNOWN_OBJECT";
     }
     let tx = await db.get(outpoint.txid);
-    if (tx.outputs.length <= outpoint.index) {
-      return false;
+    if (outpoint.index >= tx.outputs.length) {
+      // The transaction outpoint index is too large.
+      return "INVALID_TX_OUTPOINT";
     }
     let outpointPubKey = tx.outputs[outpoint.index].pubkey;
     let sig: string = input.signature.sig;
-    if (!verifySignature(sig, outpoint.txid, outpointPubKey)) {
-      return false;
+    if (!isValidSignature(sig, outpoint.txid, outpointPubKey)) {
+      // The transaction signature is invalid.
+      return "INVALID_TX_SIGNATURE";
     }
     inputSum += tx.outputs[outpoint.index].value;
   }
   for (let output of data.outputs) {
-    if (!verifyOutput(output)) {
-      return false;
-    }
     outputSum += output.value;
   }
   if (outputSum > inputSum) {
-    return false;
+    // The transaction does not satisfy the weak law of conservation.
+    return "INVALID_TX_CONSERVATION";
   }
-  return true
+  return true;
 }

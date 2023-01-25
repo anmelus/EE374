@@ -2,7 +2,7 @@ import net from 'net';
 import { appendFileSync, writeFileSync, readFileSync } from 'fs';
 import { canonicalize } from 'json-canonicalize';
 import { hello, error, get_peers, peers, get_object, i_have_object, object, get_mem_pool, mempool, get_chain_tip, chaintip } from './message_types';
-import { verify, check_valid_IP, blakeObject } from "./verify_format"
+import { verify, check_valid_IP, blakeObject, verifyTXContent} from "./verify_format"
 import level from 'level-ts';
 
 // npm install blake2 --save
@@ -181,7 +181,17 @@ const server = net.createServer((socket) => {
                                 case("object"): {
                                     let objectId = blakeObject(canonicalize(JSON.stringify(dataJson.object)))
                                     if (!await db.exists(objectId)) {
+                                        if (dataJson.object.type === "transaction") {
+                                            let TXIsValid = await verifyTXContent(dataJson.object);
+                                            if (TXIsValid !== true) {
+                                                socket.write(canonicalize(error(TXIsValid)))
+                                            }
+                                        }
 
+                                        // Not needed for PSET 2: Add code to handle block object
+                                        
+
+                                        // TODO: block this code off to only fire if transaction is validity (validity check in code right above)
                                         await db.put(objectId, dataJson.object)
                                         console.log("Added object " + objectId)
                                         // Broadcast the message to all connected peers (including sender)
