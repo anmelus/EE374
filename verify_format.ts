@@ -78,22 +78,17 @@ export function verify(dataJson: any): boolean {
           if (dataJson.object.type === "transaction" && !isValidTXFormat(dataJson)) { 
             return false;
           } 
+          // for debugging
+          if (isValidTXFormat(dataJson)) {
+            console.log("Valid format.");
+          } else {
+            console.log("inValid format.");
+          }
           if (dataJson.object.type === "block" && !isValidBlockFormat(dataJson)) {
             return false;
           }
 
           break;
-
-        case "transaction":
-            verifyTXContent(dataJson).then((result) => {
-              if (result) console.log("Successful TXID Match")
-              else {
-                console.log("No TXID found.")
-                // TODO: Return error here
-              }
-            });
-            
-            break;
         case "getmempool":
           break;
         case "mempool":
