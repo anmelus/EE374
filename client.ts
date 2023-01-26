@@ -23,9 +23,6 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     client.write(canonicalize(hello) + '\n');
     await delay(1000);
 
-    let check = {"object":{"height":0,"outputs":[{"pubkey":"958f8add086cc348e229a3b6590c71b7d7754e42134a127a50648bf07969d9a0","value":50000000000}],"type":"transaction"},"type":"object"}
-    console.log(blakeObject(canonicalize(check.object)))
-
     const obj = {
         "type": "object",
         "object": {
@@ -48,9 +45,9 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     await delay(1000);
     const get_obj = {
       "type": "getobject",
-      "objectid": "36496e13e8ad98f75321264b0a7980bfe25d4f1226ad1f8da1d8cdb82d8119ec"
+      "objectid": "4e726b06abb55d899c25ee41f6a41a6baac37a8841978108d1623dda86695529"
     }
-    // client.write(canonicalize(get_obj) + '\n')
+    client.write(canonicalize(get_obj) + '\n')
     await delay(1000);
     let genesis = {
       "type": "object",
@@ -64,7 +61,6 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
         "txids": [],
       }
     } // GENESIS
-    client.write(canonicalize(genesis) + '\n');
 
     await delay(1000);
     const trans = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"b303d841891f91af118a319f99f5984def51091166ac73c062c98f86ea7371ee"},
