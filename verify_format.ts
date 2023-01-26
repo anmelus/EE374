@@ -208,7 +208,7 @@ export async function verifyTXContent(data : any) : Promise<string | true> {
   const db = new level('./database')
   let inputSum : number = 0;
   let outputSum : number = 0;
-  if (!data.hasOwnProperty("height")) {
+  if (!data.hasOwnProperty("height")) {  // treat all coinbase as valid
     return true;
   }
   for (let input of data.inputs) {
