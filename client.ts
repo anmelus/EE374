@@ -23,9 +23,6 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     client.write(canonicalize(hello) + '\n');
     await delay(1000);
 
-    let check = {"object":{"height":0,"outputs":[{"pubkey":"958f8add086cc348e229a3b6590c71b7d7754e42134a127a50648bf07969d9a0","value":50000000000}],"type":"transaction"},"type":"object"}
-    console.log(blakeObject(canonicalize(check.object)))
-
     const obj = {
         "type": "object",
         "object": {
@@ -48,9 +45,9 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     await delay(1000);
     const get_obj = {
       "type": "getobject",
-      "objectid": "36496e13e8ad98f75321264b0a7980bfe25d4f1226ad1f8da1d8cdb82d8119ec"
+      "objectid": "4e726b06abb55d899c25ee41f6a41a6baac37a8841978108d1623dda86695529"
     }
-    // client.write(canonicalize(get_obj) + '\n')
+    client.write(canonicalize(get_obj) + '\n')
     await delay(1000);
     let genesis = {
       "type": "object",
@@ -62,16 +59,17 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
         "note": "The New York Times 2022-12-13: Scientists Achieve Nuclear Fusion Breakthrough With Blast of 192 Lasers",
         "previd": null,
         "txids": [],
+        "type":"block"
       }
     } // GENESIS
     client.write(canonicalize(genesis) + '\n');
 
     await delay(1000);
-    const trans = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"b303d841891f91af118a319f99f5984def51091166ac73c062c98f86ea7371ee"},
+    /*const trans = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"b303d841891f91af118a319f99f5984def51091166ac73c062c98f86ea7371ee"},
     "sig":"060bf7cbe141fecfebf6dafbd6ebbcff25f82e729a7770f4f3b1f81a7ec8a0ce4b287597e609b822111bbe1a83d682ef14f018f8a9143cef25ecc9a8b0c1c405"}],
     "outputs":[{"pubkey":"958f8add086cc348e229a3b6590c71b7d7754e42134a127a50648bf07969d9a0","value":10}],"type":"transaction"},"type":"object"} // NEXT BLOCK
     
-    client.write(canonicalize(trans) + '\n');
+    client.write(canonicalize(trans) + '\n');*/
     await delay(1000);
     console.log('')
     // await delay(100);
