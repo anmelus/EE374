@@ -79,11 +79,11 @@ export function verify(dataJson: any): boolean {
             return false;
           } 
           // for debugging
-          if (isValidTXFormat(dataJson)) {
-            console.log("Valid format.");
-          } else {
-            console.log("inValid format.");
-          }
+          if (dataJson.object.type === "transaction") {
+            if (isValidTXFormat(dataJson)) console.log("Valid format.");
+            else console.log("inValid format.");
+          } 
+          
           if (dataJson.object.type === "block" && !isValidBlockFormat(dataJson)) {
             return false;
           }

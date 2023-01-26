@@ -1,6 +1,9 @@
 # Personal Library I use for testing
 ponicode/
 
+# Database
+database/
+
 # Everything in node_modules
 node_modules/
 

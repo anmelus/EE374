@@ -15,17 +15,7 @@ const msgTypes = ["transaction", "block", "hello", "error", "getpeers", "peers",
 let shakenHands = new Map<string, boolean>();
 let nodes: Array<string> = new Array();
 
-interface object_key {
-    "object": {
-        "type": string,
-        "txids": Array<string>,
-        "nonce": string,
-        "previd": string,
-        "created": string,
-        "T": string
-    }
-}
-const db = new level/* <object_key> */('./database');  // commented out object_key type as database stores diff structured block and transaction objects 
+const db = new level('./database');  // commented out object_key type as database stores diff structured block and transaction objects 
 let clients: Set<net.Socket> = new Set();  // moved out of createServer's connection istener to aggregate set rather than re-init per client 
 
 try {
