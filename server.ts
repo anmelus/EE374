@@ -1,4 +1,5 @@
 import net from 'net';
+import delay from 'delay';
 import { appendFileSync, writeFileSync, readFileSync } from 'fs';
 import { canonicalize } from 'json-canonicalize';
 import { hello, error, get_peers, peers, get_object, i_have_object, object, get_mem_pool, mempool, get_chain_tip, chaintip } from './message_types';
@@ -56,6 +57,7 @@ const server = net.createServer((socket) => {
         socket.end();
     }, 30000);
 
+    // let timeoutBlock: NodeJS.Timeout | null = null;
     let timeoutId: NodeJS.Timeout | null = null;
 
     socket.on('data', async (data) => { 
@@ -181,6 +183,50 @@ const server = net.createServer((socket) => {
                                         if (dataJson.object.type === "transaction") {
                                             objIsValid = await verifyTXContent(dataJson.object);
                                         } else if (dataJson.object.type === "block") {
+                                            console.log(objectId);
+                                            if (parseInt(objectId, 16) > parseInt(dataJson.object.T, 16)) {  // check proof of work
+                                                console.log("Proof of work failed")
+                                                socket.write(canonicalize(error("INVALID_FORMAT")));
+                                                return;
+                                            } 
+                                            for (let txid of dataJson.object.txids) {  // could maybe be redone more cleanly with sets but not a priority right now
+                                                if (!await db.exists(txid)) {
+                                                    console.log("asking peers for transaction");
+                                                    clients.forEach((client) => {client.write(canonicalize(get_object(objectId)) + '\n');})
+                                                }
+                                            }
+                                            
+                                            console.log("waiting on response for transaction");
+                                            await delay(5000)
+                                            console.log("Finished delay")
+                                            
+                                            for (let txid of dataJson.object.txids) {
+                                                if (!await db.exists(txid)) { 
+                                                    console.log("Transaction could not be found");
+                                                    socket.write(canonicalize(error("UNFINDABLE_OBJECT"))+ '\n');
+                                                    return;
+                                                }
+
+                                                if ((await db.get(txid)).hasOwnProperty("height") && !(txid == dataJson.object.txids[0])) {
+                                                    console.log("Coinbase transaction is not at 0th index");
+                                                    socket.write(canonicalize(error("INVALID_BLOCK_COINBASE"))+ '\n');
+                                                    return;
+                                                }
+                                                
+                                                else if ((await db.get(txid)).hasOwnProperty("height") && (txid == dataJson.object.txids[0])) {
+                                                    for (let i=1; i < dataJson.object.txids.length; i++) {
+                                                        // Check outpoints of each
+                                                        for (let input of (await db.get(dataJson.object.txids[i])).inputs) {
+                                                            if (input.outpoint.txid == txid) {
+                                                                console.log("Coinbase transaction was repeated");
+                                                                socket.write(canonicalize(error("INVALID_TX_OUTPOINT"))+ '\n');
+                                                                return;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
                                             objIsValid = true;  // TODO PSET3 Add code to handle block object 
                                         } else {
                                             objIsValid = "UNKNOWN_OBJECT";  // this line should never be reached as we should only receive transactions and blocks

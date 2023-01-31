@@ -2,6 +2,7 @@ import { isIP, isIPv6 } from 'net';
 import level from 'level-ts';
 import { object } from './message_types';
 import * as ed from '@noble/ed25519';
+import { type } from 'os';
 
 
 export function verify(dataJson: any): boolean {
@@ -173,9 +174,10 @@ function isValidBlockFormat(dataJson : any) {
   if (!dataJson.object.hasOwnProperty("txids") 
       || !dataJson.object.hasOwnProperty("nonce")
       || !dataJson.object.hasOwnProperty("previd") 
-      || !dataJson.object.hasOwnProperty("created")
-      || !dataJson.object.hasOwnProperty("T")) {
-        return false;
+      || (!dataJson.object.hasOwnProperty("created") && typeof dataJson.object.created == "number")
+      || !dataJson.object.hasOwnProperty("T")
+      || dataJson.object.T != "00000000abc00000000000000000000000000000000000000000000000000000") {
+      return false;
   }
   return true;
 }
@@ -202,6 +204,7 @@ function isValidTXFormat(dataJson : any) {
   }
   return true;
 }
+
 
 // takes dataJson.object (must be type == transaction) argument. Don't feel like writing the interface out for that type right now.
 export async function verifyTXContent(data : any) : Promise<string | true> {

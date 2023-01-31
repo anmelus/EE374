@@ -29,11 +29,29 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     const obj1 = {"object":{"height":0,"outputs":[{"pubkey":"43e51dd8b63039194698ef83a98ca4b50af05fef3e61f0e6466b02d3dbb7bde8","value":50000000000}],"type":"transaction"},"type":"object"}
     client.write(canonicalize(obj1) + '\n');
 
-    const obj2 = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"ca31d7dd08ce8b02ed9fcb8f3e6b3186df427b707fcb02b96a8b73313b145e23"},"sig":"9563919e22b7afa448811e7dc2dd09c9fff070968037d003cb245e3378ede404e079c20b94ae4f0adcac2ec80ec57e57facae2f9f013cbb9f43907ec3d29bc09"}],"outputs":[{"pubkey":"43e51dd8b63039194698ef83a98ca4b50af05fef3e61f0e6466b02d3dbb7bde8","value":10}],"type":"transaction"},"type":"object"}
-    client.write(canonicalize(obj2) + '\n');
+    // outpoint of obj2 is the has of obj1
 
-    const obj3 = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"2fea2abaae3b3881d621dc7122dfee81ddf893ae5a088d345d04de1b12c54f86"},"sig":"8eea8953d0ededf39fdd9ec72275534764d8a1aaba131976604f893a1564f4bc797e16dc3275a0266a9f9bd77a233bf11a8974a7f2916b3c619451f510a46f0a"}],"outputs":[{"pubkey":"43e51dd8b63039194698ef83a98ca4b50af05fef3e61f0e6466b02d3dbb7bde8","value":10}],"type":"transaction"},"type":"object"}
-    client.write(canonicalize(obj3) + '\n')
+    // const obj2 = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"ca31d7dd08ce8b02ed9fcb8f3e6b3186df427b707fcb02b96a8b73313b145e23"},"sig":"9563919e22b7afa448811e7dc2dd09c9fff070968037d003cb245e3378ede404e079c20b94ae4f0adcac2ec80ec57e57facae2f9f013cbb9f43907ec3d29bc09"}],"outputs":[{"pubkey":"43e51dd8b63039194698ef83a98ca4b50af05fef3e61f0e6466b02d3dbb7bde8","value":10}],"type":"transaction"},"type":"object"}
+    // client.write(canonicalize(obj2) + '\n');
+
+    //obj 3 is the hash of obj 2
+
+    // const obj3 = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"2fea2abaae3b3881d621dc7122dfee81ddf893ae5a088d345d04de1b12c54f86"},"sig":"8eea8953d0ededf39fdd9ec72275534764d8a1aaba131976604f893a1564f4bc797e16dc3275a0266a9f9bd77a233bf11a8974a7f2916b3c619451f510a46f0a"}],"outputs":[{"pubkey":"43e51dd8b63039194698ef83a98ca4b50af05fef3e61f0e6466b02d3dbb7bde8","value":10}],"type":"transaction"},"type":"object"}
+    // client.write(canonicalize(obj3) + '\n')
+    const obj = {
+      "type": "object",
+      "object": {
+        "T": "00000000abc00000000000000000000000000000000000000000000000000000",
+        "created": 1671062400,
+        "miner": "Marabu",
+        "nonce": "000000000000000000000000000000000000000000000000000000021bea03ed",
+        "note": "The New York Times 2022-12-13: Scientists Achieve Nuclear Fusion Breakthrough With Blast of 192 Lasers",
+        "previd": null,
+        "txids": ["yoda"],
+        "type": "block"
+      }
+    }
+    client.write(canonicalize(obj) + '\n');
 });
 
 client.on('data', (data) => {  // receive data from server
