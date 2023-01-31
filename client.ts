@@ -26,21 +26,14 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     client.write(JSON.stringify({"type": "getpeers"}) + "\n");
     await delay(1000);
 
-    const obj = {
-      "object": {
-        "height":0,
-        "outputs":[
-          {
-            "pubkey":"74d49a647c565a8923a5b977fc586fd978fa016878ddde97417d43af480e7344",
-            "value":50000000000
-          }
-        ],"type":"transaction"
-      },
-      "type":"object"
-    }
+    const obj1 = {"object":{"height":0,"outputs":[{"pubkey":"25dc545b3e42b773505868a83a5cf221ef4925c5eeb1470de22eb6a85b53fcc3","value":50000000000}],"type":"transaction"},"type":"object"}
+    client.write(canonicalize(obj1) + '\n');
 
-    // console.log(JSON.stringify(obj) + '\n');
-    client.write(canonicalize(obj) + '\n');
+    const obj2 = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"0e0ac61d37a2e36ba6e987c40e0d912c9e833090fa7755e9bd3703c776ad60ff"},"sig":"cc3dd0092e2b151c2b32d67748de1591933d76ad636831b630de7f9bf38f6050d5c2726c7448d8b6477160f2eb2d81178197cbafe1ec5c215c3754843f322e02"}],"outputs":[{"pubkey":"25dc545b3e42b773505868a83a5cf221ef4925c5eeb1470de22eb6a85b53fcc3","value":10}],"type":"transaction"},"type":"object"}
+    client.write(canonicalize(obj2) + '\n');
+
+    const obj3 = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"9de12bc2542f86ca6bc65c032ac629c8cf52a62d324a6ec1b233a676d39aa6cc"},"sig":"ebd0883250cd10c741899d5679ecd421d55ea41d1de7253f0447b082b0d45a47811cc61a8da8014869a37a9c1dd36334064877bf94d429ed20435fa9ef513b0e"}],"outputs":[{"pubkey":"25dc545b3e42b773505868a83a5cf221ef4925c5eeb1470de22eb6a85b53fcc3"}],"type":"transaction"},"type":"object"}
+    client.write(canonicalize(obj3) + '\n')
 });
 
 client.on('data', (data) => {  // receive data from server

@@ -71,19 +71,23 @@ const server = net.createServer((socket) => {
         /* Add data from client to a buffer */
         let dataString = data.toString();;
         let dataJson;
+        // console.log(dataString);
         buffer += dataString;
+        console.log(buffer);
         if (buffer.length > 100000) {  // handle buffer overflow
             buffer = "";
         }
 
         /* Separate and handle individual messages within buffer */
+        let cnt = 0;
         const messages = buffer.split('\n');
+        buffer = messages[messages.length - 1];  // moved ahead of long conditional block to avoid odd asynch (uncomment at end to see)
+        // console.log(messages)
         if (messages.length > 1) {
             // console.log(buffer);
             clearTimeout(timeoutId);
             timeoutId = null;
             for (const message of messages.slice(0, -1)){  // for each msg excluding empty string at end of messages array
-                
                 /* Check if message received is JSON */
                 let isJSON = true;
                 try {
@@ -106,6 +110,7 @@ const server = net.createServer((socket) => {
                         }
                     } else {
                         let msgType = dataJson.type;
+                        let msgIsValid = false;
                         
                         try {  // validate message format
                             if(!verify(dataJson)) {
@@ -114,6 +119,8 @@ const server = net.createServer((socket) => {
                                 if (!shakenHands.get(address)) {
                                     socket.end();
                                 }
+                            } else {
+                                msgIsValid = true;
                             }
                         } catch(e) { 
                             console.log("Data formatted incorrectly.");
@@ -124,7 +131,7 @@ const server = net.createServer((socket) => {
                         }
 
                         /* Check for valid handshake and disconnect if not received */
-                        if (!shakenHands.get(address)) {
+                        if (!shakenHands.get(address) && msgIsValid) {
                             if (msgType === "hello") {                     
                                 shakenHands.set(address, true);
                                 clearTimeout(timeout_hello);
@@ -135,7 +142,7 @@ const server = net.createServer((socket) => {
                         } 
 
                         /* handle valid message */
-                        else {
+                        else if (msgIsValid) {
                             switch(msgType) {
                                 case("getpeers"):
                                     socket.write(canonicalize(peers(nodes)) + '\n');
@@ -154,7 +161,7 @@ const server = net.createServer((socket) => {
                                     const objectId = dataJson.objectid
                                     if (await db.exists(objectId)) {
                                         let obj = await db.get(objectId)
-                                        socket.write(canonicalize(object(obj)))
+                                        socket.write(canonicalize(object(obj)) + '\n')
                                         console.log("Sent object " + objectId)
                                     }
                                     break;
@@ -163,7 +170,7 @@ const server = net.createServer((socket) => {
                                 case("ihaveobject"): {
                                     const objectId = dataJson.objectid
                                     if (!await db.exists(objectId)) {
-                                        socket.write(canonicalize(get_object(objectId)))
+                                        socket.write(canonicalize(get_object(objectId)) + '\n')
                                     }
                                     break;
                                 }
@@ -183,11 +190,12 @@ const server = net.createServer((socket) => {
                                             await db.put(objectId, dataJson.object)
                                             console.log("Added object " + objectId)
                                             // Broadcast the message to all connected peers (including sender)
-                                            clients.forEach((client) => {
-                                                client.write(canonicalize(i_have_object(objectId)))
+                                            clients.forEach((client) => { 
+
+                                                client.write(canonicalize(i_have_object(objectId)) + '\n')
                                             });
                                         } else {
-                                            socket.write(canonicalize(error(objIsValid)));
+                                            socket.write(canonicalize(error(objIsValid)) + '\n');
                                         }
                                     }
                                         
@@ -206,7 +214,7 @@ const server = net.createServer((socket) => {
                     }
                 }
             }
-            buffer = messages[messages.length - 1];
+            // buffer = messages[messages.length - 1];
         }
     });
     
