@@ -184,11 +184,12 @@ const server = net.createServer((socket) => {
                                             objIsValid = await verifyTXContent(dataJson.object);
                                         } else if (dataJson.object.type === "block") {
                                             console.log(objectId);
-                                            if (parseInt(objectId, 16) > parseInt(dataJson.object.T, 16)) {  // check proof of work
-                                                console.log("Proof of work failed")
-                                                socket.write(canonicalize(error("INVALID_FORMAT")));
-                                                return;
-                                            } 
+                                            // Currently assumes the block with ID previd has been received. Checking will be added in pset 4
+                                            // if (parseInt(objectId, 16) > parseInt(dataJson.object.T, 16)) {  // check proof of work
+                                            //     console.log("Proof of work failed")
+                                            //     socket.write(canonicalize(error("INVALID_FORMAT")));
+                                            //     return;
+                                            // } 
                                             for (let txid of dataJson.object.txids) {  // could maybe be redone more cleanly with sets but not a priority right now
                                                 if (!await db.exists(txid)) {
                                                     console.log("asking peers for transaction");
@@ -207,13 +208,14 @@ const server = net.createServer((socket) => {
                                                     return;
                                                 }
 
-                                                if ((await db.get(txid)).hasOwnProperty("height") && !(txid == dataJson.object.txids[0])) {
+                                                if ((await db.get(txid)).hasOwnProperty("height") && !(txid === dataJson.object.txids[0])) {
                                                     console.log("Coinbase transaction is not at 0th index");
                                                     socket.write(canonicalize(error("INVALID_BLOCK_COINBASE"))+ '\n');
                                                     return;
                                                 }
                                                 
-                                                else if ((await db.get(txid)).hasOwnProperty("height") && (txid == dataJson.object.txids[0])) {
+                                                // handle case wherein there is a valid coinbase transaction in the block
+                                                else if ((await db.get(txid)).hasOwnProperty("height") && (txid === dataJson.object.txids[0])) {
                                                     // Vaidate coinbase transaction
                                                     let COINBASE = await db.get(txid)
                                                     if (COINBASE.hasOwnProperty("inputs") || COINBASE.outputs.length != 1) {
@@ -222,23 +224,36 @@ const server = net.createServer((socket) => {
                                                         return;
                                                     } 
                                                     
-
+                                                    let blockFees = 0 // difference of input and output of all transactions in this block
                                                     for (let i=1; i < dataJson.object.txids.length; i++) {
-                                                        // Check outpoints of each
-                                                        let sum = 0
-                                                        for (let input of (await db.get(dataJson.object.txids[i])).inputs) {
-                                                            if (input.outpoint.txid == txid) {
+                                                        let txFee = 0  // difference of input and output in this transaction
+                                                        // No transaction in the block can have the coinbase transaction as its input
+                                                        let currTxObj = await db.get(dataJson.object.txids[i])
+                                                        for (let input of currTxObj.inputs) {  
+                                                            let outpoint = input.outpoint;
+                                                            if (outpoint.txid == txid) {
                                                                 console.log("Coinbase transaction was repeated");
-                                                                socket.write(canonicalize(error("INVALID_TX_OUTPOINT"))+ '\n');
+                                                                socket.write(canonicalize(error("INVALID_TX_OUTPOINT")) + '\n');
                                                                 return;
                                                             }
+                                                            let outpointTxObj = await db.get(outpoint.txid);
+                                                            txFee += outpointTxObj.outputs[outpoint.index].value; // add the value of every input to this transaction
                                                         }
-
-                                                        if (COINBASE.outputs[0]['value'] <= (50*(10**12))) {} 
-                                                        /* TODO Incomplete, The output of the
-                                                        coinbase transaction can be at most the sum of transaction fees in the block plus
-                                                        the block reward. In our protocol, the block reward is a constant 50 × 1012 picabu." */
+                                                        for (let ouput of currTxObj.outputs) {
+                                                            txFee -= ouput.value;  // subtract the value of every output of this transaction
+                                                        }
+                                                        blockFees += txFee
                                                     }
+                                                    /* the output of the coinbase transaction can be at most the sum of transaction fees in the block plus
+                                                    the block reward. In our protocol, the block reward is a constant 50 × 1012 picabu." */
+                                                    console.log(COINBASE.outputs[0]['value']);
+                                                    console.log(blockFees);
+                                                    if (COINBASE.outputs[0]['value'] > (50*(10**12)) + blockFees) {
+                                                        console.log("Coinsbase output too high");
+                                                        socket.write(canonicalize(error("INVALID_BLOCK_COINBASE")) + '\n');
+                                                        return;
+                                                    } 
+                                            
                                                 }
                                             }
 
