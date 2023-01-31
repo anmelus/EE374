@@ -191,7 +191,7 @@ function isValidTXFormat(dataJson : any) {
       return false;
     }
   }
-  if(!dataJson.object.hasOwnProperty("height")) {  // coin base transaction has no inputs property to check so format verification is complete
+  if (dataJson.object.hasOwnProperty("height")) {  // coin base transaction has no inputs property to check so format verification is complete
     return true;
   }
   for (let input of dataJson.object.inputs) {  // each input must contain a signature and an outpoint containing a txid and index
@@ -225,7 +225,7 @@ export async function verifyTXContent(data : any) : Promise<string | true> {
       return "INVALID_TX_OUTPOINT";
     }
     let outpointPubKey = tx.outputs[outpoint.index].pubkey;
-    let sig: string = input.signature.sig;
+    let sig: string = input.sig;
     if (!isValidSignature(sig, outpoint.txid, outpointPubKey)) {
       // The transaction signature is invalid.
       return "INVALID_TX_SIGNATURE";

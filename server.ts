@@ -169,7 +169,7 @@ const server = net.createServer((socket) => {
                                 }
 
                                 case("object"): {
-                                    let objectId = blakeObject(canonicalize(JSON.stringify(dataJson.object)))
+                                    const objectId = blakeObject(canonicalize(dataJson.object));
                                     if (!await db.exists(objectId)) {
                                         let objIsValid : string | true;  // error string if invalid, true if valid
                                         if (dataJson.object.type === "transaction") {
@@ -184,7 +184,7 @@ const server = net.createServer((socket) => {
                                             console.log("Added object " + objectId)
                                             // Broadcast the message to all connected peers (including sender)
                                             clients.forEach((client) => {
-                                                client.write(canonicalize(i_have_object(objectId)));
+                                                client.write(canonicalize(i_have_object(objectId)))
                                             });
                                         } else {
                                             socket.write(canonicalize(error(objIsValid)));
