@@ -214,8 +214,18 @@ const server = net.createServer((socket) => {
                                                 }
                                                 
                                                 else if ((await db.get(txid)).hasOwnProperty("height") && (txid == dataJson.object.txids[0])) {
+                                                    // Vaidate coinbase transaction
+                                                    let COINBASE = await db.get(txid)
+                                                    if (COINBASE.hasOwnProperty("inputs") || COINBASE.outputs.length != 1) {
+                                                        console.log("Coinbase formatted incorrectly.");
+                                                        socket.write(canonicalize(error("INVALID_FORMAT"))+ '\n')
+                                                        return;
+                                                    } 
+                                                    
+
                                                     for (let i=1; i < dataJson.object.txids.length; i++) {
                                                         // Check outpoints of each
+                                                        let sum = 0
                                                         for (let input of (await db.get(dataJson.object.txids[i])).inputs) {
                                                             if (input.outpoint.txid == txid) {
                                                                 console.log("Coinbase transaction was repeated");
@@ -223,6 +233,11 @@ const server = net.createServer((socket) => {
                                                                 return;
                                                             }
                                                         }
+
+                                                        if (COINBASE.outputs[0]['value'] <= (50*(10**12))) {} 
+                                                        /* TODO Incomplete, The output of the
+                                                        coinbase transaction can be at most the sum of transaction fees in the block plus
+                                                        the block reward. In our protocol, the block reward is a constant 50 × 1012 picabu." */
                                                     }
                                                 }
                                             }
