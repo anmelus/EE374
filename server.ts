@@ -84,8 +84,8 @@ const server = net.createServer((socket) => {
         buffer = messages[messages.length - 1];  // moved ahead of long conditional block to avoid odd asynch (uncomment at end to see)
         // console.log(messages)
         if (messages.length > 1) {
-            // console.log(buffer);
             clearTimeout(timeoutId);
+            clearTimeout(timeout_hello);
             timeoutId = null;
             for (const message of messages.slice(0, -1)){  // for each msg excluding empty string at end of messages array
                 /* Check if message received is JSON */
@@ -134,7 +134,6 @@ const server = net.createServer((socket) => {
                         if (!shakenHands.get(address) && msgIsValid) {
                             if (msgType === "hello") {                     
                                 shakenHands.set(address, true);
-                                clearTimeout(timeout_hello);
                             } else {
                                 socket.write(canonicalize(error("INVALID_HANDSHAKE")) + '\n');
                                 socket.end();

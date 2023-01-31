@@ -80,8 +80,8 @@ export function verify(dataJson: any): boolean {
           } 
           // for debugging
           if (dataJson.object.type === "transaction") {
-            if (isValidTXFormat(dataJson)) console.log("Valid format.");
-            else console.log("inValid format.");
+            if (isValidTXFormat(dataJson)) {console.log("Valid format.")}
+            else {console.log("invalid format.")}
           } 
           
           if (dataJson.object.type === "block" && !isValidBlockFormat(dataJson)) {
@@ -227,6 +227,7 @@ export async function verifyTXContent(data : any) : Promise<string | true> {
     let outpointPubKey = tx.outputs[outpoint.index].pubkey;
     let sig: string = input.sig;
     if (!isValidSignature(sig, outpoint.txid, outpointPubKey)) {
+      console.log("sig check!");
       // The transaction signature is invalid.
       return "INVALID_TX_SIGNATURE";
     }

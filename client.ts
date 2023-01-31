@@ -26,13 +26,13 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     client.write(JSON.stringify({"type": "getpeers"}) + "\n");
     await delay(1000);
 
-    const obj1 = {"object":{"height":0,"outputs":[{"pubkey":"25dc545b3e42b773505868a83a5cf221ef4925c5eeb1470de22eb6a85b53fcc3","value":50000000000}],"type":"transaction"},"type":"object"}
+    const obj1 = {"object":{"height":0,"outputs":[{"pubkey":"43e51dd8b63039194698ef83a98ca4b50af05fef3e61f0e6466b02d3dbb7bde8","value":50000000000}],"type":"transaction"},"type":"object"}
     client.write(canonicalize(obj1) + '\n');
 
-    const obj2 = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"0e0ac61d37a2e36ba6e987c40e0d912c9e833090fa7755e9bd3703c776ad60ff"},"sig":"cc3dd0092e2b151c2b32d67748de1591933d76ad636831b630de7f9bf38f6050d5c2726c7448d8b6477160f2eb2d81178197cbafe1ec5c215c3754843f322e02"}],"outputs":[{"pubkey":"25dc545b3e42b773505868a83a5cf221ef4925c5eeb1470de22eb6a85b53fcc3","value":10}],"type":"transaction"},"type":"object"}
+    const obj2 = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"ca31d7dd08ce8b02ed9fcb8f3e6b3186df427b707fcb02b96a8b73313b145e23"},"sig":"9563919e22b7afa448811e7dc2dd09c9fff070968037d003cb245e3378ede404e079c20b94ae4f0adcac2ec80ec57e57facae2f9f013cbb9f43907ec3d29bc09"}],"outputs":[{"pubkey":"43e51dd8b63039194698ef83a98ca4b50af05fef3e61f0e6466b02d3dbb7bde8","value":10}],"type":"transaction"},"type":"object"}
     client.write(canonicalize(obj2) + '\n');
 
-    const obj3 = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"9de12bc2542f86ca6bc65c032ac629c8cf52a62d324a6ec1b233a676d39aa6cc"},"sig":"ebd0883250cd10c741899d5679ecd421d55ea41d1de7253f0447b082b0d45a47811cc61a8da8014869a37a9c1dd36334064877bf94d429ed20435fa9ef513b0e"}],"outputs":[{"pubkey":"25dc545b3e42b773505868a83a5cf221ef4925c5eeb1470de22eb6a85b53fcc3"}],"type":"transaction"},"type":"object"}
+    const obj3 = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"2fea2abaae3b3881d621dc7122dfee81ddf893ae5a088d345d04de1b12c54f86"},"sig":"8eea8953d0ededf39fdd9ec72275534764d8a1aaba131976604f893a1564f4bc797e16dc3275a0266a9f9bd77a233bf11a8974a7f2916b3c619451f510a46f0a"}],"outputs":[{"pubkey":"43e51dd8b63039194698ef83a98ca4b50af05fef3e61f0e6466b02d3dbb7bde8","value":10}],"type":"transaction"},"type":"object"}
     client.write(canonicalize(obj3) + '\n')
 });
 
