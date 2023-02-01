@@ -1,9 +1,7 @@
 import { isIP, isIPv6 } from 'net';
 import level from 'level-ts';
 import { object } from './message_types';
-import * as ed from '@noble/ed25519';
 import { type } from 'os';
-
 
 export function verify(dataJson: any): boolean {
     /*
@@ -154,11 +152,6 @@ export function blakeObject(object: string): string {
   return objectid.digest("hex")
 }
 
-async function isValidSignature(signature: string, hash: string, publicKey: string) {
-  const isValid = await ed.verify(signature, hash, publicKey);
-  return isValid;
-}
-
 export function isValidOutput(output: any): boolean {
    if (!output.hasOwnProperty("pubkey") || !output.hasOwnProperty("value")) {
     return false;
@@ -201,47 +194,6 @@ function isValidTXFormat(dataJson : any) {
         || !input.outpoint.hasOwnProperty("txid") || !input.outpoint.hasOwnProperty("index")) {
           return false;
     }
-  }
-  return true;
-}
-
-
-// takes dataJson.object (must be type == transaction) argument. Don't feel like writing the interface out for that type right now.
-export async function verifyTXContent(data : any) : Promise<string | true> {
-  const db = new level('./database')
-  let inputSum : number = 0;
-  let outputSum : number = 0;
-  if (data.hasOwnProperty("height")) {  // treat all coinbase as valid
-    return true;
-  }
-  for (let input of data.inputs) {
-    let outpoint = input.outpoint;
-    if (!await db.exists(outpoint.txid)) {
-      // This error type look like it is meant to be emitted in response to a getobject 
-      // msg but it may also be appropriate for use when an outpoint cannot be found.
-      // see Ed -> https://edstem.org/us/courses/31092/discussion/2430962
-      return "UNKNOWN_OBJECT";
-    }
-    let tx = await db.get(outpoint.txid);
-    if (outpoint.index >= tx.outputs.length) {
-      // The transaction outpoint index is too large.
-      return "INVALID_TX_OUTPOINT";
-    }
-    let outpointPubKey = tx.outputs[outpoint.index].pubkey;
-    let sig: string = input.sig;
-    if (!isValidSignature(sig, outpoint.txid, outpointPubKey)) {
-      console.log("sig check!");
-      // The transaction signature is invalid.
-      return "INVALID_TX_SIGNATURE";
-    }
-    inputSum += tx.outputs[outpoint.index].value;
-  }
-  for (let output of data.outputs) {
-    outputSum += output.value;
-  }
-  if (outputSum > inputSum) {
-    // The transaction does not satisfy the weak law of conservation.
-    return "INVALID_TX_CONSERVATION";
   }
   return true;
 }

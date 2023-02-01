@@ -26,21 +26,21 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
     client.write(JSON.stringify({"type": "getpeers"}) + "\n");
     await delay(300);
 
-    // hash: "ca31d7dd08ce8b02ed9fcb8f3e6b3186df427b707fcb02b96a8b73313b145e23"
+    //  hash: "ca31d7dd08ce8b02ed9fcb8f3e6b3186df427b707fcb02b96a8b73313b145e23"
     // hash value++: "6712c089113dae5db624c70e75e747c72ebe447f27717416c1b473512c3fd415"
-    const obj1 = {"object":{"height":0,"outputs":[{"pubkey":"43e51dd8b63039194698ef83a98ca4b50af05fef3e61f0e6466b02d3dbb7bde8","value":50000000001}],"type":"transaction"},"type":"object"}
+    const obj1 = {"object":{"height":0,"outputs":[{"pubkey":"43e51dd8b63039194698ef83a98ca4b50af05fef3e61f0e6466b02d3dbb7bde8","value":50000000000}],"type":"transaction"},"type":"object"}
     client.write(canonicalize(obj1) + '\n');
     await delay(300);
 
     // hash: "2fea2abaae3b3881d621dc7122dfee81ddf893ae5a088d345d04de1b12c54f86"
     // hash with when coinbase value++: "09619801ddf55ad7af179ec019aec8285263f3d1e0de408e4857332374cb6733"
-    const obj2 = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"6712c089113dae5db624c70e75e747c72ebe447f27717416c1b473512c3fd415"},"sig":"9563919e22b7afa448811e7dc2dd09c9fff070968037d003cb245e3378ede404e079c20b94ae4f0adcac2ec80ec57e57facae2f9f013cbb9f43907ec3d29bc09"}],"outputs":[{"pubkey":"43e51dd8b63039194698ef83a98ca4b50af05fef3e61f0e6466b02d3dbb7bde8","value":10}],"type":"transaction"},"type":"object"}
+    const obj2 = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"ca31d7dd08ce8b02ed9fcb8f3e6b3186df427b707fcb02b96a8b73313b145e23"},"sig":"9563919e22b7afa448811e7dc2dd09c9fff070968037d003cb245e3378ede404e079c20b94ae4f0adcac2ec80ec57e57facae2f9f013cbb9f43907ec3d29bc09"}],"outputs":[{"pubkey":"43e51dd8b63039194698ef83a98ca4b50af05fef3e61f0e6466b02d3dbb7bde8","value":10}],"type":"transaction"},"type":"object"}
     client.write(canonicalize(obj2) + '\n');
     await delay(300);
 
     // hash: "7e79725c9bb6eb85b550e06de356bcfc34621a96611e2b02360f874c0f4301ae"
     // hash when coinbase value++: "db9b1dc7c24c3575d51ffc979848c3f987d968db6b4f70ef0b73dbce7735003a"
-    const obj3 = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"09619801ddf55ad7af179ec019aec8285263f3d1e0de408e4857332374cb6733"},"sig":"8eea8953d0ededf39fdd9ec72275534764d8a1aaba131976604f893a1564f4bc797e16dc3275a0266a9f9bd77a233bf11a8974a7f2916b3c619451f510a46f0a"}],"outputs":[{"pubkey":"43e51dd8b63039194698ef83a98ca4b50af05fef3e61f0e6466b02d3dbb7bde8","value":10}],"type":"transaction"},"type":"object"}
+    const obj3 = {"object":{"inputs":[{"outpoint":{"index":0,"txid":"2fea2abaae3b3881d621dc7122dfee81ddf893ae5a088d345d04de1b12c54f86"},"sig":"8eea8953d0ededf39fdd9ec72275534764d8a1aaba131976604f893a1564f4bc797e16dc3275a0266a9f9bd77a233bf11a8974a7f2916b3c619451f510a46f0a"}],"outputs":[{"pubkey":"43e51dd8b63039194698ef83a98ca4b50af05fef3e61f0e6466b02d3dbb7bde8","value":10}],"type":"transaction"},"type":"object"}
     client.write(canonicalize(obj3) + '\n')
     await delay(300);
 
@@ -70,9 +70,9 @@ client.connect(SERVER_PORT, SERVER_HOST, async () => {
           "note": "The New York Times 2022-12-13: Scientists Achieve Nuclear Fusion Breakthrough With Blast of 192 Lasers",
           "previd": null,
           "txids": [
-            "6712c089113dae5db624c70e75e747c72ebe447f27717416c1b473512c3fd415",
+            "ca31d7dd08ce8b02ed9fcb8f3e6b3186df427b707fcb02b96a8b73313b145e23",
             // "2fea2abaae3b3881d621dc7122dfee81ddf893ae5a088d345d04de1b12c54f86",
-            "db9b1dc7c24c3575d51ffc979848c3f987d968db6b4f70ef0b73dbce7735003a"
+            "7e79725c9bb6eb85b550e06de356bcfc34621a96611e2b02360f874c0f4301ae"
         ],
           "type": "block"
         }

@@ -1,10 +1,17 @@
+/*
+**********************************
+DO NOT GO LIVE WITH PROOF OF WORK CHECKING DISABLED
+*********************************
+*/
+
 import net from 'net';
 import delay from 'delay';
 import { appendFileSync, writeFileSync, readFileSync } from 'fs';
 import { canonicalize } from 'json-canonicalize';
 import { hello, error, get_peers, peers, get_object, i_have_object, object, get_mem_pool, mempool, get_chain_tip, chaintip } from './message_types';
-import { verify, check_valid_IP, blakeObject, verifyTXContent} from "./verify_format"
+import { verify, check_valid_IP, blakeObject} from "./verify_format"
 import level from 'level-ts';
+import { verifyTXContent, isValidPOW, verifyBlockContent } from './verify_content';
 
 // npm install blake2 --save
 
@@ -16,8 +23,8 @@ const msgTypes = ["transaction", "block", "hello", "error", "getpeers", "peers",
 let shakenHands = new Map<string, boolean>();
 let nodes: Array<string> = new Array();
 
-const db = new level('./database');  // commented out object_key type as database stores diff structured block and transaction objects 
-let clients: Set<net.Socket> = new Set();  // moved out of createServer's connection istener to aggregate set rather than re-init per client 
+const db = new level('./database');   
+let clients: Set<net.Socket> = new Set(); 
 
 try {
     let file_content = readFileSync('peers.txt', 'utf8'); 
@@ -177,108 +184,7 @@ const server = net.createServer((socket) => {
                                 }
 
                                 case("object"): {
-                                    const objectId = blakeObject(canonicalize(dataJson.object));
-                                    if (!await db.exists(objectId)) {
-                                        let objIsValid : string | true;  // error string if invalid, true if valid
-                                        if (dataJson.object.type === "transaction") {
-                                            objIsValid = await verifyTXContent(dataJson.object);
-                                        } else if (dataJson.object.type === "block") {
-                                            console.log(objectId);
-                                            // Currently assumes the block with ID previd has been received. Checking will be added in pset 4
-                                            // if (parseInt(objectId, 16) > parseInt(dataJson.object.T, 16)) {  // check proof of work
-                                            //     console.log("Proof of work failed")
-                                            //     socket.write(canonicalize(error("INVALID_FORMAT")));
-                                            //     return;
-                                            // } 
-                                            for (let txid of dataJson.object.txids) {  // could maybe be redone more cleanly with sets but not a priority right now
-                                                if (!await db.exists(txid)) {
-                                                    console.log("asking peers for transaction");
-                                                    clients.forEach((client) => {client.write(canonicalize(get_object(txid)) + '\n');})
-                                                }
-                                            }
-                                            
-                                            console.log("waiting on response for transaction");
-                                            await delay(5000)
-                                            console.log("Finished delay")
-                                            
-                                            for (let txid of dataJson.object.txids) {
-                                                if (!await db.exists(txid)) { 
-                                                    console.log("Transaction could not be found");
-                                                    socket.write(canonicalize(error("UNFINDABLE_OBJECT"))+ '\n');
-                                                    return;
-                                                }
-
-                                                if ((await db.get(txid)).hasOwnProperty("height") && !(txid === dataJson.object.txids[0])) {
-                                                    console.log("Coinbase transaction is not at 0th index");
-                                                    socket.write(canonicalize(error("INVALID_BLOCK_COINBASE"))+ '\n');
-                                                    return;
-                                                }
-                                                
-                                                // handle case wherein there is a valid coinbase transaction in the block
-                                                else if ((await db.get(txid)).hasOwnProperty("height") && (txid === dataJson.object.txids[0])) {
-                                                    // Vaidate coinbase transaction
-                                                    let COINBASE = await db.get(txid)
-                                                    if (COINBASE.hasOwnProperty("inputs") || COINBASE.outputs.length != 1) {
-                                                        console.log("Coinbase formatted incorrectly.");
-                                                        socket.write(canonicalize(error("INVALID_FORMAT"))+ '\n')
-                                                        return;
-                                                    } 
-                                                    
-                                                    let blockFees = 0 // difference of input and output of all transactions in this block
-                                                    for (let i=1; i < dataJson.object.txids.length; i++) {
-                                                        let txFee = 0  // difference of input and output in this transaction
-                                                        // No transaction in the block can have the coinbase transaction as its input
-                                                        let currTxObj = await db.get(dataJson.object.txids[i])
-                                                        for (let input of currTxObj.inputs) {  
-                                                            let outpoint = input.outpoint;
-                                                            if (outpoint.txid == txid) {
-                                                                console.log("Coinbase transaction was repeated");
-                                                                socket.write(canonicalize(error("INVALID_TX_OUTPOINT")) + '\n');
-                                                                return;
-                                                            }
-                                                            let outpointTxObj = await db.get(outpoint.txid);
-                                                            txFee += outpointTxObj.outputs[outpoint.index].value; // add the value of every input to this transaction
-                                                        }
-                                                        for (let ouput of currTxObj.outputs) {
-                                                            txFee -= ouput.value;  // subtract the value of every output of this transaction
-                                                        }
-                                                        blockFees += txFee
-                                                    }
-                                                    /* the output of the coinbase transaction can be at most the sum of transaction fees in the block plus
-                                                    the block reward. In our protocol, the block reward is a constant 50 × 1012 picabu." */
-                                                    console.log(COINBASE.outputs[0]['value']);
-                                                    console.log(blockFees);
-                                                    if (COINBASE.outputs[0]['value'] > (50*(10**12)) + blockFees) {
-                                                        console.log("Coinsbase output too high");
-                                                        socket.write(canonicalize(error("INVALID_BLOCK_COINBASE")) + '\n');
-                                                        return;
-                                                    } 
-                                            
-                                                }
-                                            }
-
-                                            objIsValid = true;  // TODO PSET3 Add code to handle block object 
-                                        } else {
-                                            objIsValid = "UNKNOWN_OBJECT";  // this line should never be reached as we should only receive transactions and blocks
-                                        }
-                                        if (objIsValid === true) {
-                                            await db.put(objectId, dataJson.object)
-                                            console.log("Added object " + objectId)
-                                            // Broadcast the message to all connected peers (including sender)
-                                            clients.forEach((client) => { 
-
-                                                client.write(canonicalize(i_have_object(objectId)) + '\n')
-                                            });
-                                        } else {
-                                            socket.write(canonicalize(error(objIsValid)) + '\n');
-                                        }
-                                    }
-                                        
-                                    // Local file for easier viewing of databse not working atm
-                                    const all = await db.all()
-                                    for (let item in all) {
-                                        writeFileSync('database.txt', item + '\n')
-                                    }                                    
+                                    handleObject(dataJson.object, socket);           
                                     break;
                                 }
 
@@ -306,12 +212,60 @@ server.listen(HOST_PORT, HOST, () => {
     console.log(`Server listening on ${HOST}:${HOST_PORT}`);
 });
 
-// // connect to one peer
-//  const client = new net.Socket();
-//  client.connect(18018, '45.63.84.226', async () => {
-//     client.write(canonicalize(hello()) + '\n');
-//     client.write(canonicalize(get_peers()) + '\n');
-//  })
-//  client.on('data', (data) => {  // receive data from server
-//     console.log(`Server sent: ${data}`);
-//  });
+async function handleObject (object : any, socket : net.Socket) {
+    const objectId = blakeObject(canonicalize(object));
+    console.log(objectId);
+
+    if (await db.exists(objectId)) {  // exit if we already store the object
+        return;
+    }
+
+    let objIsValid : string | true;  // error string if invalid, true if valid
+
+    if (object.type === "transaction") {
+        objIsValid = await verifyTXContent(object);
+
+    } else if (object.type === "block") {  // Currently assumes the block with ID previd has been received. Checking will be added in pset 4 
+        //objIsValid = isValidPOW (objectId, object);  // REANABLE BEFORE MAKING LIVE TO CHECK POW
+        objIsValid = true;
+        if (objIsValid !== true) {
+            socket.write(canonicalize(error(objIsValid)) + '\n');
+            return;  // exited handle object function to prevent later methods from being called
+        }
+
+        /* Request all transactions in block txids unkown by this node */
+        for (let txid of object.txids) {
+            if (!await db.exists(txid)) {
+                console.log("asking peers for transaction");
+                clients.forEach((client) => {client.write(canonicalize(get_object(txid)) + '\n');})
+            }
+        }
+
+        console.log("waiting on response for transaction");
+        await delay(5000);
+        console.log("Finished delay");
+
+        // add call to verify txids contained in block
+        objIsValid = await verifyBlockContent(object);
+        // handle return value
+        
+    } else {
+        objIsValid = "UNKNOWN_OBJECT";  // this line should never be reached as we should only receive transactions and blocks
+    }
+    if (objIsValid === true) {
+        await db.put(objectId, object)
+        console.log("Added object " + objectId)
+        // Broadcast the message to all connected peers (including sender)
+        clients.forEach((client) => { 
+            client.write(canonicalize(i_have_object(objectId)) + '\n')
+        });
+    } else {
+        socket.write(canonicalize(error(objIsValid)) + '\n');
+    }
+        
+    // Local file for easier viewing of databse not working atm
+    // const all = await db.all()
+    // for (let item in all) {
+    //     writeFileSync('database.txt', item + '\n')
+    // }                    
+}
