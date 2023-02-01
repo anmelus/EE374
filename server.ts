@@ -193,7 +193,7 @@ const server = net.createServer((socket) => {
                                             for (let txid of dataJson.object.txids) {  // could maybe be redone more cleanly with sets but not a priority right now
                                                 if (!await db.exists(txid)) {
                                                     console.log("asking peers for transaction");
-                                                    clients.forEach((client) => {client.write(canonicalize(get_object(objectId)) + '\n');})
+                                                    clients.forEach((client) => {client.write(canonicalize(get_object(txid)) + '\n');})
                                                 }
                                             }
                                             
