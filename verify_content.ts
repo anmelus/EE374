@@ -1,7 +1,9 @@
 import level from 'level-ts';
 import * as ed from '@noble/ed25519';
+import { object } from './message_types';
 
 let db = new level('./database');  // check that we don't need to import the DB
+let UTXO: Set<any>  = new Set(); 
 
 async function isValidSignature(signature: string, hash: string, publicKey: string) {
     const isValid = await ed.verify(signature, hash, publicKey);
@@ -58,7 +60,9 @@ export function isValidPOW (objectId : string, block : any) {
 
 
 export async function verifyBlockContent (block : any) : Promise<string | true> {
+    // TODO: IGNORE THE BLOCK IF ITS PREVIOUS BLOCK HAS NOT BEEN RECEIVED
     /* Confirm all transactions in blockk txids are now known by this node */
+    let updatedUTXO: Set<any> = UTXO;
     for (const txid of block.txids) {
         /* check if transaction is known */
         if (!await db.exists(txid)) { 
@@ -66,14 +70,37 @@ export async function verifyBlockContent (block : any) : Promise<string | true> 
             return "UNFINDABLE_OBJECT";
         }
 
-        const tx = await db.get(txid);
+        const txObj = await db.get(txid);
 
         /* Coinbase transaction not at 0th index of txids */
-        if (tx.hasOwnProperty("height") && !(txid === block.txids[0])) {
+        if (txObj.hasOwnProperty("height") && !(txid === block.txids[0])) {
             console.log("Coinbase transaction is not at 0th index");
             return "INVALID_BLOCK_COINBASE";
         }
+
+        if (txObj.hasOwnProperty("inputs")) {
+            for (let input of txObj.inputs) {
+                let outpointObj = input.outpoint;
+                console.log("checking utxo");
+                if (!UTXO.has(outpointObj)) {
+                    console.log("init")
+                    return "INVALID_TX_OUTPOINT";
+                }
+                console.log("post check")
+                UTXO.delete(outpointObj);
+            }
+        }
+
+        for (let i = 0; i < txObj.outputs.length; i++) {
+            let newUTXO = {
+                "txid": txid,
+                "index": i 
+            }
+            updatedUTXO.add(newUTXO);
+        }
     }
+    UTXO = updatedUTXO;
+    console.log(UTXO); // just for debugging
     const firstTx = await db.get(block.txids[0]);
     if (firstTx.hasOwnProperty("height")) {
         const coinbaseTxObj = firstTx;

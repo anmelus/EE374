@@ -1,7 +1,7 @@
 /*
 **********************************
 DO NOT GO LIVE WITH PROOF OF WORK CHECKING DISABLED
-*********************************
+**********************************
 */
 
 import net from 'net';
@@ -24,7 +24,7 @@ let shakenHands = new Map<string, boolean>();
 let nodes: Array<string> = new Array();
 
 const db = new level('./database');   
-let clients: Set<net.Socket> = new Set(); 
+let clients: Set<net.Socket> = new Set();
 
 try {
     let file_content = readFileSync('peers.txt', 'utf8'); 
@@ -247,8 +247,6 @@ async function handleObject (object : any, socket : net.Socket) {
 
         // add call to verify txids contained in block
         objIsValid = await verifyBlockContent(object);
-        // handle return value
-        
     } else {
         objIsValid = "UNKNOWN_OBJECT";  // this line should never be reached as we should only receive transactions and blocks
     }
