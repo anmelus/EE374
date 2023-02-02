@@ -1,6 +1,8 @@
 import level from 'level-ts';
 import * as ed from '@noble/ed25519';
+import { canonicalize } from 'json-canonicalize';
 import { object } from './message_types';
+import { Console } from 'console';
 
 let db = new level('./database');  // check that we don't need to import the DB
 let UTXO: Set<any>  = new Set(); 
@@ -64,9 +66,10 @@ export async function verifyBlockContent (block : any) : Promise<string | true> 
     /* Confirm all transactions in blockk txids are now known by this node */
     let updatedUTXO: Set<any> = UTXO;
     for (const txid of block.txids) {
+
         /* check if transaction is known */
         if (!await db.exists(txid)) { 
-            console.log("Transaction could not be found");
+            console.log("Transaction could not be found:", txid);
             return "UNFINDABLE_OBJECT";
         }
 
@@ -79,11 +82,12 @@ export async function verifyBlockContent (block : any) : Promise<string | true> 
         }
 
         if (txObj.hasOwnProperty("inputs")) {
+            console.log("inputs:", txObj.inputs);
             for (let input of txObj.inputs) {
                 let outpointObj = input.outpoint;
-                console.log("checking utxo");
-                if (!UTXO.has(outpointObj)) {
-                    console.log("init")
+                if (!UTXO.has(canonicalize(outpointObj))) {  // formatting of the outpoints in the utxo set is the same as in the inputs list
+                    console.log("outpoint: ", canonicalize(outpointObj));
+                    console.log("invalid tx outpoint")
                     return "INVALID_TX_OUTPOINT";
                 }
                 console.log("post check")
@@ -96,11 +100,18 @@ export async function verifyBlockContent (block : any) : Promise<string | true> 
                 "txid": txid,
                 "index": i 
             }
-            updatedUTXO.add(newUTXO);
+            console.log("adding new utxo:", canonicalize(newUTXO));
+            updatedUTXO.add(canonicalize(newUTXO)); // what if a transaction has no output?
         }
     }
-    UTXO = updatedUTXO;
-    console.log(UTXO); // just for debugging
+    if (block.txids.length === 0) {
+        return true;
+    }
+    console.log("swapping utxo set with: ", updatedUTXO);
+    for (let outpoint of updatedUTXO) {
+        UTXO.add(outpoint);
+    }
+    console.log("UTXO: ", UTXO); // just for debugging
     const firstTx = await db.get(block.txids[0]);
     if (firstTx.hasOwnProperty("height")) {
         const coinbaseTxObj = firstTx;
@@ -135,8 +146,8 @@ export async function verifyBlockContent (block : any) : Promise<string | true> 
         }
         /* the output of the coinbase transaction can be at most the sum of transaction fees in the block plus
         the block reward. In our protocol, the block reward is a constant 50 × 1012 picabu." */
-        console.log(coinbaseTxObj.outputs[0]['value']);
-        console.log(blockFees);
+        console.log("value of coinbase: ", coinbaseTxObj.outputs[0]['value']);
+        console.log("blockFees: ", blockFees);
         if (coinbaseTxObj.outputs[0]['value'] > (50*(10**12)) + blockFees) {
             console.log("Coinsbase output too high");
             return "INVALID_BLOCK_COINBASE";

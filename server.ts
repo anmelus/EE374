@@ -1,6 +1,7 @@
 /*
 **********************************
 DO NOT GO LIVE WITH PROOF OF WORK CHECKING DISABLED
+DELETE THE LINE SETTING OBJECT IS VALID TO TRUE BEFORE GOING LIVE
 **********************************
 */
 
@@ -82,7 +83,7 @@ const server = net.createServer((socket) => {
         let dataJson;
         // console.log(dataString);
         buffer += dataString;
-        console.log(buffer);
+        console.log("buffer: ", buffer);
         if (buffer.length > 100000) {  // handle buffer overflow
             buffer = "";
         }
@@ -127,7 +128,9 @@ const server = net.createServer((socket) => {
                                 socket.write(canonicalize(error("INVALID_FORMAT")) + '\n');
                                 if (!shakenHands.get(address)) {
                                     socket.end();
+                                    return;
                                 }
+                                continue;
                             } else {
                                 msgIsValid = true;
                             }
@@ -136,7 +139,9 @@ const server = net.createServer((socket) => {
                             socket.write(canonicalize(error("INVALID_FORMAT")) + '\n');
                             if (!shakenHands.get(address)) {
                                 socket.end();
+                                return;
                             }
+                            continue;
                         }
 
                         /* Check for valid handshake and disconnect if not received */
@@ -214,7 +219,7 @@ server.listen(HOST_PORT, HOST, () => {
 
 async function handleObject (object : any, socket : net.Socket) {
     const objectId = blakeObject(canonicalize(object));
-    console.log(objectId);
+    console.log("objectId:", objectId);
 
     if (await db.exists(objectId)) {  // exit if we already store the object
         return;
@@ -225,9 +230,10 @@ async function handleObject (object : any, socket : net.Socket) {
     if (object.type === "transaction") {
         objIsValid = await verifyTXContent(object);
 
-    } else if (object.type === "block") {  // Currently assumes the block with ID previd has been received. Checking will be added in pset 4 
-        //objIsValid = isValidPOW (objectId, object);  // REANABLE BEFORE MAKING LIVE TO CHECK POW
-        objIsValid = true;
+    } else if (object.type === "block") {  
+        // Ignore the block if the block with previd is not held 
+        // objIsValid = isValidPOW (objectId, object);  // REANABLE BEFORE MAKING LIVE TO CHECK POW
+        objIsValid = true; 
         if (objIsValid !== true) {
             socket.write(canonicalize(error(objIsValid)) + '\n');
             return;  // exited handle object function to prevent later methods from being called
