@@ -91,7 +91,7 @@ export async function verifyBlockContent (block : any) : Promise<string | true> 
                     return "INVALID_TX_OUTPOINT";
                 }
                 console.log("post check")
-                UTXO.delete(outpointObj);
+                UTXO.delete(canonicalize(outpointObj));
             }
         }
 

@@ -228,12 +228,15 @@ async function handleObject (object : any, socket : net.Socket) {
     let objIsValid : string | true;  // error string if invalid, true if valid
 
     if (object.type === "transaction") {
+        console.log("txid: ", objectId);
         objIsValid = await verifyTXContent(object);
-
+        console.log(objIsValid)
     } else if (object.type === "block") {  
         // Ignore the block if the block with previd is not held 
-        // objIsValid = isValidPOW (objectId, object);  // REANABLE BEFORE MAKING LIVE TO CHECK POW
-        objIsValid = true; 
+        if (!db.exists(object.previd)) {
+            return;
+        }
+        objIsValid = isValidPOW (objectId, object);
         if (objIsValid !== true) {
             socket.write(canonicalize(error(objIsValid)) + '\n');
             return;  // exited handle object function to prevent later methods from being called
@@ -248,10 +251,9 @@ async function handleObject (object : any, socket : net.Socket) {
         }
 
         console.log("waiting on response for transaction");
-        await delay(5000);
+        await delay(8000);   // if we receive a call to get object during this delay period, we will write out an empty message to the client
+        // ideally replace this delay with emitters
         console.log("Finished delay");
-
-        // add call to verify txids contained in block
         objIsValid = await verifyBlockContent(object);
     } else {
         objIsValid = "UNKNOWN_OBJECT";  // this line should never be reached as we should only receive transactions and blocks
