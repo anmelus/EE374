@@ -7,9 +7,16 @@ import { Console } from 'console';
 let db = new level('./database');  // check that we don't need to import the DB
 let UTXO: Set<any>  = new Set(); 
 
+function hex2uint8(hex: string) {
+    return Uint8Array.from(Buffer.from(hex, 'hex'))
+}
+
 async function isValidSignature(signature: string, hash: string, publicKey: string) {
-    const isValid = await ed.verify(signature, hash, publicKey);
-    return isValid;
+    const pubkeyBuffer = hex2uint8(publicKey);
+    const sigBuffer = hex2uint8(signature);
+    const messageBuffer = Uint8Array.from(Buffer.from(hash, 'utf-8'));
+  
+    return await ed.verify(sigBuffer, messageBuffer, pubkeyBuffer);
 }
 
 // takes dataJson.object (must be type == transaction) argument. Don't feel like writing the interface out for that type right now.
